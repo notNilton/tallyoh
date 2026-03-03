@@ -23,7 +23,8 @@ model User {
   updatedAt       DateTime @updatedAt
 
   // Relacionamentos
-  accounts        Account[]
+  accounts        Account[]        @relation("AccountOwner")
+  sharedAccounts  AccountAccess[]  // Contas onde o usuário é convidado
   categories      Category[]
   transactions    Transaction[]
   budgets         Budget[]
@@ -58,6 +59,10 @@ model Account {
   icon            String?     // Ícone selecionado
   currencyCode    String      @default("BRL") @db.VarChar(3) // Ex: BRL, USD, EUR
 
+  // Suporte a Contas Conjuntas (Grupo Familiar)
+  isShared        Boolean     @default(false)
+  sharedWith      AccountAccess[]
+
   // Para contas normais
   balance         Decimal     @default(0.00) @db.Decimal(12, 2)
 
@@ -78,6 +83,27 @@ model Account {
   transactions    Transaction[]
   balanceHistory  BalanceHistory[]
   statements      CreditCardStatement[]
+}
+
+// Tabela Pivo para Grupo Familiar / Contas Conjuntas
+model AccountAccess {
+  id              String      @id @default(uuid())
+  accountId       String
+  account         Account     @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  userId          String
+  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  role            AccessRole  @default(VIEWER) // EDITOR ou VIEWER
+
+  createdAt       DateTime    @default(now())
+
+  @@unique([accountId, userId])
+}
+
+enum AccessRole {
+  EDITOR
+  VIEWER
 }
 
 model CreditCardStatement {
@@ -213,10 +239,11 @@ model Transaction {
   goalId          String?
   goal            Goal?             @relation(fields: [goalId], references: [id], onDelete: SetNull)
 
-  // Para parcelamentos e recorrências
-  installmentId   String?           // Agrupa transações que são parcelas de uma mesma compra (1/12, 2/12)
-  installmentNum  Int?
-  totalInstallments Int?
+  // Para parcelamentos e recorrências (Ligação Forte)
+  installmentId   String?
+  installment     Installment?      @relation(fields: [installmentId], references: [id], onDelete: Cascade)
+  installmentNum  Int?              // Ex: Parcela 1
+  totalInstallments Int?            // Ex: de 12
 
   // Para Transferências (Ponte com a tabela Transfer)
   transferOut       Transfer?         @relation("TransferSource")
@@ -245,6 +272,22 @@ model Transfer {
   destinationTransaction  Transaction @relation("TransferDestination", fields: [destinationTransactionId], references: [id], onDelete: Cascade)
 
   createdAt               DateTime    @default(now())
+}
+
+// Entidade "Pai" para agrupar as compras parceladas no cartão de crédito
+model Installment {
+  id              String         @id @default(uuid())
+  userId          String
+
+  totalAmount     Decimal        @db.Decimal(12, 2)
+  totalParts      Int            // Quantas vezes foi dividido
+
+  description     String         @db.VarChar(255)
+  date            DateTime       // Data original da compra
+
+  transactions    Transaction[]  // As N transações geradas para os próximos meses
+
+  createdAt       DateTime       @default(now())
 }
 ```
 

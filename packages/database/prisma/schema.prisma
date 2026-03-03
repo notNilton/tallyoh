@@ -1,0 +1,313 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+model User {
+    id        String  @id @default(uuid())
+    workosId  String  @unique
+    email     String  @unique
+    name      String?
+    avatarUrl String?
+
+    subscriptionTier    String    @default("FREE")
+    stripeCustomerId    String?   @unique
+    revenueCatId        String?   @unique
+    subscriptionExpires DateTime?
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    accounts       Account[]       @relation("AccountOwner")
+    sharedAccounts AccountAccess[]
+    categories     Category[]
+    transactions   Transaction[]
+    budgets        Budget[]
+    goals          Goal[]
+    accounts       Account[]
+}
+
+enum AccountType {
+    CHECKING
+    SAVINGS
+    CREDIT_CARD
+    CASH
+    WALLET
+    INVESTMENT
+}
+
+model Account {
+    id     String @id @default(uuid())
+    userId String
+    user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    name         String      @db.VarChar(100)
+    type         AccountType
+    color        String?     @db.VarChar(7)
+    icon         String?
+    currencyCode String      @default("BRL") @db.VarChar(3)
+
+    isShared   Boolean         @default(false)
+    sharedWith AccountAccess[]
+
+    balance Decimal @default(0.00) @db.Decimal(12, 2)
+
+    creditLimit Decimal? @db.Decimal(12, 2)
+    closingDay  Int?
+    dueDay      Int?
+
+    includeInTotal Boolean @default(true)
+
+    isActive  Boolean   @default(true)
+    deletedAt DateTime?
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    transactions   Transaction[]
+    balanceHistory BalanceHistory[]
+    statements     CreditCardStatement[]
+    user           User                  @relation(fields: [userId], references: [id])
+}
+
+model AccountAccess {
+    id        String  @id @default(uuid())
+    accountId String
+    account   Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+    userId String
+    user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    role AccessRole @default(VIEWER)
+
+    createdAt DateTime @default(now())
+
+    @@unique([accountId, userId])
+}
+
+enum AccessRole {
+    EDITOR
+    VIEWER
+}
+
+model CreditCardStatement {
+    id        String  @id @default(uuid())
+    accountId String
+    account   Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+    month Int
+    year  Int
+
+    status      StatementStatus @default(OPEN)
+    totalAmount Decimal         @default(0.00) @db.Decimal(12, 2)
+    paidAmount  Decimal         @default(0.00) @db.Decimal(12, 2)
+
+    dueDate     DateTime @db.Date
+    closingDate DateTime @db.Date
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    transactions Transaction[]
+
+    @@unique([accountId, month, year])
+}
+
+enum StatementStatus {
+    OPEN
+    CLOSED
+    PAID
+}
+
+model BalanceHistory {
+    id        String  @id @default(uuid())
+    accountId String
+    account   Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+    date    DateTime @db.Date
+    balance Decimal  @db.Decimal(12, 2)
+
+    createdAt DateTime @default(now())
+
+    @@unique([accountId, date])
+}
+
+enum TransactionType {
+    INCOME
+    EXPENSE
+    TRANSFER
+}
+
+enum TransactionStatus {
+    PENDING
+    COMPLETED
+    CANCELED
+}
+
+model Category {
+    id     String @id @default(uuid())
+    userId String
+    user   User?  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    name  String          @db.VarChar(50)
+    icon  String?
+    color String?         @db.VarChar(7)
+    type  TransactionType
+
+    parentId String?
+    parent   Category?  @relation("SubCategories", fields: [parentId], references: [id], onDelete: SetNull)
+    children Category[] @relation("SubCategories")
+
+    transactions Transaction[]
+    budgets      Budget[]
+
+    @@unique([userId, name, type])
+}
+
+model Tag {
+    id   String @id @default(uuid())
+    name String
+
+    transactions Transaction[]
+}
+
+model Transaction {
+    id     String @id @default(uuid())
+    userId String
+    user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    accountId String
+    account   Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+    categoryId String?
+    category   Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+    tags Tag[]
+
+    type        TransactionType
+    amount      Decimal         @db.Decimal(12, 2)
+    date        DateTime
+    description String          @db.VarChar(255)
+    notes       String?         @db.Text
+
+    status TransactionStatus @default(COMPLETED)
+
+    attachmentUrl String?
+    currencyCode  String  @default("BRL") @db.VarChar(3)
+
+    statementId String?
+    statement   CreditCardStatement? @relation(fields: [statementId], references: [id], onDelete: SetNull)
+
+    goalId String?
+    goal   Goal?   @relation(fields: [goalId], references: [id], onDelete: SetNull)
+
+    installmentId     String?
+    installment       Installment? @relation(fields: [installmentId], references: [id], onDelete: Cascade)
+    installmentNum    Int?
+    totalInstallments Int?
+
+    transferOut Transfer? @relation("TransferSource")
+    transferIn  Transfer? @relation("TransferDestination")
+
+    isActive  Boolean   @default(true)
+    deletedAt DateTime?
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@index([date])
+    @@index([userId, date])
+}
+
+model Transfer {
+    id String @id @default(uuid())
+
+    sourceTransactionId String      @unique
+    sourceTransaction   Transaction @relation("TransferSource", fields: [sourceTransactionId], references: [id], onDelete: Cascade)
+
+    destinationTransactionId String      @unique
+    destinationTransaction   Transaction @relation("TransferDestination", fields: [destinationTransactionId], references: [id], onDelete: Cascade)
+
+    createdAt DateTime @default(now())
+}
+
+model Installment {
+    id     String @id @default(uuid())
+    userId String
+
+    totalAmount Decimal @db.Decimal(12, 2)
+    totalParts  Int
+
+    description String   @db.VarChar(255)
+    date        DateTime
+
+    transactions Transaction[]
+
+    createdAt DateTime @default(now())
+}
+
+model Budget {
+    id     String @id @default(uuid())
+    userId String
+    user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    categoryId String?
+    category   Category? @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+    amountLimit Decimal @db.Decimal(12, 2)
+    month       Int
+    year        Int
+
+    rolloverAmount Decimal @default(0.00) @db.Decimal(12, 2)
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@unique([userId, categoryId, month, year])
+}
+
+model Goal {
+    id     String @id @default(uuid())
+    userId String
+    user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    name          String  @db.VarChar(100)
+    targetAmount  Decimal @db.Decimal(12, 2)
+    currentAmount Decimal @default(0.00) @db.Decimal(12, 2)
+
+    deadline DateTime?
+    color    String?   @db.VarChar(7)
+    icon     String?
+
+    transactions Transaction[]
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+}
+
+model AuditLog {
+    id     String  @id @default(uuid())
+    userId String?
+
+    action   String @db.VarChar(100)
+    entity   String @db.VarChar(50)
+    entityId String
+
+    oldValues Json?
+    newValues Json?
+
+    ipAddress String? @db.VarChar(45)
+    userAgent String? @db.Text
+
+    createdAt DateTime @default(now())
+
+    @@index([entity, entityId])
+    @@index([userId])
+}

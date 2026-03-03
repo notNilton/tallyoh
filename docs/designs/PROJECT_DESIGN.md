@@ -38,6 +38,7 @@ Este documento detalha as principais funcionalidades sugeridas para a plataforma
 ### 1.5. Ecossistema Integrado e Importações
 
 - **Prioridade 1: Importação de OFX/CSV:** Foco total em permitir que o usuário faça o upload massivo de extratos bancários como principal motor automatizado, evitando altos custos operacionais no MVP.
+  - _Arquitetura Assíncrona (RabbitMQ/BullMQ):_ Como a importação de meses de transações pode ser pesada, o upload do arquivo disparará um evento para uma fila (Mensageria), onde "Workers" farão o processamento, categorização e conciliação em background, notificando o aplicativo quando concluído via WebSockets/Server-Sent Events (SSE).
 - **Leitura de Código de Barras e Pix Copia e Cola:** No aplicativo Mobile, captura de dados direto da câmera ou clipboard para criar contas a pagar instantaneamente.
 - **Open Finance (Fase 2 / Postergável):** Conexão _read-only_ constante com as APIs bancárias (via Belvo ou Pluggy). Devido ao custo por usuário ativo, será postergado ou atrelado estritamente a um plano monetizado "Premium".
 
@@ -131,6 +132,8 @@ Este documento detalha as principais funcionalidades sugeridas para a plataforma
 - **Hospedagem Frontend (Web & Backoffice):** Vercel (ideal para ecossistema React/Next/Vite, com deploy automático rápido).
 - **Hospedagem Backend (NestJS):** render.com ou Railway (fácil orquestração de containers Node.js e banco de dados gerenciado com backups automáticos).
 - **Banco de Dados:** PostgreSQL hospedado no Render, Railway ou managed service (ex: Neon DB para Serverless Postgres).
+- **Mensageria e Cache (Background Jobs):** Instância de **RabbitMQ** ou **Redis** (para rodar o BullMQ) hospedada junto ao backend, essencial para lidar com filas de importação pesadas (CSV/OFX) e cálculos em tempo real de dashboards (CQRS/Event Sourcing para relatórios baseados nos logs do banco).
+- **Arquitetura Financeira (Double-Entry Bookkeeping):** O banco de dados evoluirá para a arquitetura de "Partidas Dobradas" (uma conta de Débito sempre possui uma de Crédito correspondente), garantindo **integridade contábil absoluta** contra saldo "vazando". Todo dinheiro que "sai" de uma conta vai obrigatoriamente para uma conta fantasma de "Despesa x", garantindo que `Ativos = Passivos + Patrimônio`.
 - **CI/CD pipeline:**
   - **GitHub Actions:** Pipeline automatizado rodando Lint, Prettier e Testes em cada Pull Request para blindar a `main`.
   - **Deploy Contínuo:** Merge na branch `main` dispara o deploy no Render (Backend) e Vercel (Frontend).
@@ -153,3 +156,51 @@ Com base nas análises de viabilidade tecnológica e de negócios, a estrutura d
 | **Gamificação/Badges**              | Baixo   | Média        | **Postergável**            |
 | **Open Finance API**                | Médio   | Alta         | **Postergável (Custo)**    |
 | **Reconciliação e Saldo Histórico** | Alto    | Alta         | **Prioridade 1**           |
+
+---
+
+## 8. Novas Fases do Projeto (Ecossistema Inteligente)
+
+### Fase 3: Inteligência Artificial e Predição (O Cérebro)
+
+Nesta fase, o app deixa de ser reativo (registrar o que passou) e passa a ser preditivo (avisar o que virá).
+
+- **IA de Categorização Semântica:** Uso de LLMs (como GPT-4o ou Gemini) para entender descrições confusas de extratos (ex: "EST-9922-SÃO-PAULO" identificado como "Posto de Gasolina").
+- **Previsão de Saldo (Cashflow Forecasting):** Algoritmo que analisa o histórico e projeta o saldo do usuário para os próximos 30, 60 e 90 dias, alertando sobre possíveis furos no caixa.
+- **Detecção de Anomalias:** Notificações contextuais (ex: _"Detectamos que sua conta de luz veio 40% acima da média dos últimos 3 meses"_).
+- **Chatbot Consultivo (Financial Coach):** Interface de chat para perguntas financeiras complexas do próprio orçamento do usuário.
+
+### Fase 4: Marketplace e Open Finance Ativo (A Monetização)
+
+Transformar a plataforma em um hub de serviços financeiros onde o app gera receita por lead qualificado.
+
+- **Comparador de Investimentos:** Se o usuário tem dinheiro parado, o app sugere CDBs com melhor rendimento.
+- **Otimização de Crédito:** Análise das taxas de juros dos empréstimos atuais e sugestão de portabilidade.
+- **Recuperação de Cashback/Taxas:** Integração com APIs de programas de fidelidade.
+
+### Fase 5: B2B2C e Educação (O Ecossistema)
+
+Expansão do modelo de negócio para além do usuário final direto.
+
+- **White Label para Empresas (Benefício Corporativo):** Versão do app vendida para RHs como benefício de saúde financeira.
+- **Módulo Kids/Teen:** Contas dependentes com "mesada educativa", onde pais aprovam gastos.
+- **Trilhas de Aprendizado Gamificadas:** Micro-cursos liberados conforme o comportamento financeiro do usuário.
+
+---
+
+## 9. Arquitetura de Dados Adicional (AI & Scale)
+
+Para suportar as novas fases (além do PostgreSQL, Prisma, e Redis/RabbitMQ já mapeados), a infraestrutura exigirá:
+
+| Tecnologia                                       | Finalidade                                                                                            |
+| ------------------------------------------------ | ----------------------------------------------------------------------------------------------------- |
+| **Vector Database (Pinecone/Weaviate/pgvector)** | Para armazenar embeddings de transações e permitir busca semântica livre e cruzamentos de IA rápidos. |
+
+---
+
+## 10. Cronograma de Lançamento (Roadmap Macro)
+
+1. **Mês 1-3 (MVP):** Lançamento do Core (Lançamentos manuais, Importação OFX, Dashboards básicos e Reconciliação).
+2. **Mês 4-6 (V1.5):** Mobile Offline-first, Grupo Familiar e Notificações Pró-ativas.
+3. **Mês 7-12 (V2.0):** Open Finance (Premium), IA Preditiva (LLMs) e Automação extrema.
+4. **Ano 2 (Expansão):** Marketplace de crédito/investimentos e Verticais B2B2C (Módulo Kids/Empresas).
