@@ -20,10 +20,8 @@
     "start:dev:backend": "npm run start:dev --workspace=backend",
     "start:prod:backend": "npm run start:prod --workspace=backend",
     "// --- DATABASE ---": "",
-    "build:db": "npm run build --workspace=@project-budget/database",
-    "dev:db": "npm run dev --workspace=@project-budget/database",
     "db:generate": "npm run db:generate --workspace=@project-budget/database",
-    "db:push": "npm run db:push --workspace=@project-budget/database",
+    "db:migrate": "npm run db:migrate --workspace=@project-budget/database",
     "db:studio": "npm run db:studio --workspace=@project-budget/database"
   },
   "devDependencies": {
@@ -49,5 +47,9 @@
     "*.{json,md,yml,yaml,css,scss}": [
       "prettier --write"
     ]
+  },
+  "dependencies": {
+    "@prisma/client": "^7.4.2",
+    "prisma": "^7.4.2"
   }
 }

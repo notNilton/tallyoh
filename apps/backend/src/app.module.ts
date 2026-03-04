@@ -9,6 +9,7 @@ import { CategoriesModule } from './categories/categories.module';
 import { BudgetsModule } from './budgets/budgets.module';
 import { GoalsModule } from './goals/goals.module';
 import { AuthModule } from './auth/auth.module';
+import { VehiclesModule } from './vehicles/vehicles.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { AuthModule } from './auth/auth.module';
     BudgetsModule,
     GoalsModule,
     AuthModule,
+    VehiclesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
