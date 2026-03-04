@@ -6,52 +6,55 @@ import {
   Param,
   Delete,
   Patch,
-  Query,
+  UseGuards,
 } from '@nestjs/common';
 import { CategoriesService } from './categories.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
-import { Category } from '@project-budget/database';
+import { Category, User } from '@project-budget/database';
+import { WorkOsAuthGuard } from '../auth/auth.guard';
+import { CurrentUser } from '../auth/current-user.decorator';
 
+@UseGuards(WorkOsAuthGuard)
 @Controller('categories')
 export class CategoriesController {
   constructor(private readonly categoriesService: CategoriesService) {}
 
   @Get()
-  findAll(@Query('userId') userId: string): Promise<Category[]> {
-    return this.categoriesService.findAll(userId);
+  findAll(@CurrentUser() user: User): Promise<Category[]> {
+    return this.categoriesService.findAll(user.id);
   }
 
   @Get(':id')
   findOne(
     @Param('id') id: string,
-    @Query('userId') userId: string,
+    @CurrentUser() user: User,
   ): Promise<Category> {
-    return this.categoriesService.findOne(id, userId);
+    return this.categoriesService.findOne(id, user.id);
   }
 
   @Post()
   create(
-    @Query('userId') userId: string,
+    @CurrentUser() user: User,
     @Body() dto: CreateCategoryDto,
   ): Promise<Category> {
-    return this.categoriesService.create(userId, dto);
+    return this.categoriesService.create(user.id, dto);
   }
 
   @Patch(':id')
   update(
     @Param('id') id: string,
-    @Query('userId') userId: string,
+    @CurrentUser() user: User,
     @Body() dto: UpdateCategoryDto,
   ): Promise<Category> {
-    return this.categoriesService.update(id, userId, dto);
+    return this.categoriesService.update(id, user.id, dto);
   }
 
   @Delete(':id')
   remove(
     @Param('id') id: string,
-    @Query('userId') userId: string,
+    @CurrentUser() user: User,
   ): Promise<Category> {
-    return this.categoriesService.remove(id, userId);
+    return this.categoriesService.remove(id, user.id);
   }
 }

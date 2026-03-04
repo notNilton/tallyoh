@@ -217,6 +217,19 @@ _Refinamento da UX, recursos avançados de gestão e trabalho em equipe_
   - Cálculo mensal: quanto é juros vs quanto abate o principal
   - Projeção de quitação e economia com amortizações extras
 
+## 2.10. Gestão de Veículos e Abastecimentos (Fleet Module)
+
+- **Cadastro de Veículos:**
+  - Frota pessoal com placa, modelo, ano e tipo de combustível
+  - Atribuição de um veículo em cada novo `abastecimento` ou `manutenção`
+- **Controle de Abastecimento (Fuel Tracking):**
+  - Entrada de dados: Quilometragem atual (Odômetro), Litros abastecidos, Preço por Litro, Posto de Gasolina
+  - Transação Financeira: O Gasto reflete automaticamente no Extrato/Budget de "Transporte/Combustível"
+- **Analytics de Frota:**
+  - Cálculo automático de Autonomia (km/L ou km/kWh)
+  - Custo real por Quilômetro Rodado (R$/km)
+  - Histórico de variação do Preço do Combustível ao longo do tempo
+
 ## 2.10. Exportação & Contabilidade
 
 - **Relatório para Imposto de Renda:**

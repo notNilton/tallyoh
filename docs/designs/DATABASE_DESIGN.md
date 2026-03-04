@@ -29,6 +29,7 @@ model User {
   transactions    Transaction[]
   budgets         Budget[]
   goals           Goal[]
+  vehicles        Vehicle[]
 }
 ```
 
@@ -256,6 +257,9 @@ model Transaction {
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt
 
+  // Abastecimento
+  refuelingLog    RefuelingLog?
+
   @@index([date])
   @@index([userId, date])
 }
@@ -344,6 +348,53 @@ model Goal {
 
   createdAt       DateTime   @default(now())
   updatedAt       DateTime   @updatedAt
+}
+
+```
+
+---
+
+## 6.5. Veículos e Abastecimento (Fleet & Fuel Tracking)
+
+Módulo dedicado para vincular gastos automotivos (combustível, manutenção) ao cálculo de autonomia, hodômetro e custo por km.
+
+```prisma
+model Vehicle {
+  id              String         @id @default(uuid())
+  userId          String
+  user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  name            String         @db.VarChar(100) // ex: "Honda Civic 2021"
+  licensePlate    String?        @db.VarChar(10)
+  make            String?        @db.VarChar(50)  // Marca
+  model           String?        @db.VarChar(50)  // Modelo
+  year            Int?
+
+  // Controle de Soft Delete
+  isActive        Boolean        @default(true)
+  deletedAt       DateTime?
+
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  refuelings      RefuelingLog[]
+}
+
+model RefuelingLog {
+  id              String      @id @default(uuid())
+  vehicleId       String
+  vehicle         Vehicle     @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  // O abstrato da despesa vira uma Transaction comum. Isso acopla todo o custo do posto na DB
+  transactionId   String      @unique
+  transaction     Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+
+  odometer        Decimal     @db.Decimal(10, 2) // Hodômetro atual no painel (km)
+  fuelLiters      Decimal     @db.Decimal(8, 3)  // Quantidade de Litros/M³ abastecidos
+  pricePerLiter   Decimal     @db.Decimal(8, 3)  // Custo unitário do volume pago
+  isFullTank      Boolean     @default(true)     // Encheu o tanque? (Necessário para cálculo exato de km/l)
+
+  createdAt       DateTime    @default(now())
 }
 ```
 

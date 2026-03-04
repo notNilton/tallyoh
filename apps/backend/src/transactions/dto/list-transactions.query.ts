@@ -4,17 +4,11 @@ import {
   IsNumber,
   IsOptional,
   IsUUID,
-  IsString,
-  IsNotEmpty,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { TransactionType, TransactionStatus } from '@project-budget/database';
 
 export class ListTransactionsQuery {
-  @IsString()
-  @IsNotEmpty()
-  userId: string;
-
   @IsUUID()
   @IsOptional()
   accountId?: string;

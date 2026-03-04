@@ -8,6 +8,7 @@ import { TransactionsModule } from './transactions/transactions.module';
 import { CategoriesModule } from './categories/categories.module';
 import { BudgetsModule } from './budgets/budgets.module';
 import { GoalsModule } from './goals/goals.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { GoalsModule } from './goals/goals.module';
     CategoriesModule,
     BudgetsModule,
     GoalsModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -8,17 +8,11 @@ import { ListTransactionsQuery } from './dto/list-transactions.query';
 export class TransactionsService {
   constructor(private readonly db: DatabaseService) {}
 
-  async findAll(query: ListTransactionsQuery): Promise<Transaction[]> {
-    const {
-      userId,
-      accountId,
-      type,
-      status,
-      from,
-      to,
-      page = 1,
-      limit = 20,
-    } = query;
+  async findAll(
+    userId: string,
+    query: ListTransactionsQuery,
+  ): Promise<Transaction[]> {
+    const { accountId, type, status, from, to, page = 1, limit = 20 } = query;
 
     return this.db.transaction.findMany({
       where: {

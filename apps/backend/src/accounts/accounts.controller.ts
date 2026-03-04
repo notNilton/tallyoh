@@ -6,52 +6,52 @@ import {
   Param,
   Delete,
   Patch,
-  Query,
+  UseGuards,
 } from '@nestjs/common';
 import { AccountsService } from './accounts.service';
 import { CreateAccountDto } from './dto/create-account.dto';
 import { UpdateAccountDto } from './dto/update-account.dto';
-import { Account } from '@project-budget/database';
+import { Account, User } from '@project-budget/database';
+import { WorkOsAuthGuard } from '../auth/auth.guard';
+import { CurrentUser } from '../auth/current-user.decorator';
 
+@UseGuards(WorkOsAuthGuard)
 @Controller('accounts')
 export class AccountsController {
   constructor(private readonly accountsService: AccountsService) {}
 
   @Get()
-  findAll(@Query('userId') userId: string): Promise<Account[]> {
-    return this.accountsService.findAll(userId);
+  findAll(@CurrentUser() user: User): Promise<Account[]> {
+    return this.accountsService.findAll(user.id);
   }
 
   @Get(':id')
   findOne(
     @Param('id') id: string,
-    @Query('userId') userId: string,
+    @CurrentUser() user: User,
   ): Promise<Account> {
-    return this.accountsService.findOne(id, userId);
+    return this.accountsService.findOne(id, user.id);
   }
 
   @Post()
   create(
-    @Query('userId') userId: string,
+    @CurrentUser() user: User,
     @Body() dto: CreateAccountDto,
   ): Promise<Account> {
-    return this.accountsService.create(userId, dto);
+    return this.accountsService.create(user.id, dto);
   }
 
   @Patch(':id')
   update(
     @Param('id') id: string,
-    @Query('userId') userId: string,
+    @CurrentUser() user: User,
     @Body() dto: UpdateAccountDto,
   ): Promise<Account> {
-    return this.accountsService.update(id, userId, dto);
+    return this.accountsService.update(id, user.id, dto);
   }
 
   @Delete(':id')
-  remove(
-    @Param('id') id: string,
-    @Query('userId') userId: string,
-  ): Promise<Account> {
-    return this.accountsService.remove(id, userId);
+  remove(@Param('id') id: string, @CurrentUser() user: User): Promise<Account> {
+    return this.accountsService.remove(id, user.id);
   }
 }
