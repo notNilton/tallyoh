@@ -1,13 +1,14 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import { User } from '@project-budget/database';
+import { UpsertUserDto } from './dto/upsert-user.dto';
 
 @Injectable()
 export class UsersService {
   constructor(private readonly db: DatabaseService) {}
 
   findAll(): Promise<User[]> {
-    return this.db.user.findMany({ where: { isActive: true } as never });
+    return this.db.user.findMany();
   }
 
   async findOne(id: string): Promise<User> {
@@ -20,19 +21,14 @@ export class UsersService {
     return this.db.user.findUnique({ where: { workosId } });
   }
 
-  async upsertFromWorkos(data: {
-    workosId: string;
-    email: string;
-    name?: string;
-    avatarUrl?: string;
-  }): Promise<User> {
+  async upsertFromWorkos(dto: UpsertUserDto): Promise<User> {
     return this.db.user.upsert({
-      where: { workosId: data.workosId },
-      create: data,
+      where: { workosId: dto.workosId },
+      create: dto,
       update: {
-        email: data.email,
-        name: data.name,
-        avatarUrl: data.avatarUrl,
+        email: dto.email,
+        name: dto.name,
+        avatarUrl: dto.avatarUrl,
       },
     });
   }

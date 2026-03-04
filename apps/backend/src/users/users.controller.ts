@@ -1,6 +1,7 @@
 import { Controller, Get, Post, Body, Param, Delete } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { User } from '@project-budget/database';
+import { UpsertUserDto } from './dto/upsert-user.dto';
 
 @Controller('users')
 export class UsersController {
@@ -22,16 +23,8 @@ export class UsersController {
   }
 
   @Post('upsert')
-  upsertFromWorkos(
-    @Body()
-    data: {
-      workosId: string;
-      email: string;
-      name?: string;
-      avatarUrl?: string;
-    },
-  ): Promise<User> {
-    return this.usersService.upsertFromWorkos(data);
+  upsertFromWorkos(@Body() dto: UpsertUserDto): Promise<User> {
+    return this.usersService.upsertFromWorkos(dto);
   }
 
   @Delete(':id')
