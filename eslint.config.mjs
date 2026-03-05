@@ -14,9 +14,12 @@ export default [
             parserOptions: {
                 ecmaVersion: "latest",
                 sourceType: "module",
+                jsx: true,
             },
             globals: {
                 ...globals.node,
+                ...globals.browser,
+                React: "readonly",
             },
         },
         plugins: {
@@ -58,6 +61,7 @@ export default [
             "coverage/**",
             "node_modules/**",
             "*.min.js",
+            "**/.content-collections/**",
             "apps/mobile/android/**",
             "apps/mobile/ios/**"
         ],

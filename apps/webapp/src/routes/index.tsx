@@ -1,28 +1,35 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute } from '@tanstack/react-router';
 import {
   Plus,
   ArrowUpCircle,
   ArrowDownCircle,
   CreditCard,
   PieChart,
-  History,
+  History as HistoryIcon,
   TrendingUp,
   ShieldCheck,
   ChevronRight,
   Wallet,
-  Building
-} from 'lucide-react'
+  Building,
+  type LucideIcon,
+} from 'lucide-react';
 
 export const Route = createFileRoute('/')({
   component: UserDashboard,
-})
+});
 
-function MetricCard({ title, value, detail, icon: Icon, color }: {
-  title: string,
-  value: string,
-  detail: string,
-  icon: any,
-  color: string
+function MetricCard({
+  title,
+  value,
+  detail,
+  icon: Icon,
+  color,
+}: {
+  title: string;
+  value: string;
+  detail: string;
+  icon: LucideIcon;
+  color: string;
 }) {
   return (
     <div className="card-premium p-6 flex flex-col gap-4">
@@ -37,7 +44,7 @@ function MetricCard({ title, value, detail, icon: Icon, color }: {
         <p className="text-2xl font-bold font-display mt-1">{value}</p>
       </div>
     </div>
-  )
+  );
 }
 
 function UserDashboard() {
@@ -106,9 +113,14 @@ function UserDashboard() {
               {[30, 45, 25, 60, 80, 55, 90].map((h, i) => (
                 <div key={i} className="flex-1 flex flex-col gap-1 items-center group">
                   <div className="w-full bg-primary/10 group-hover:bg-primary/20 rounded-t-md transition-smooth relative h-[180px] flex flex-col justify-end">
-                    <div className="w-full bg-primary/40 group-hover:bg-primary/60 rounded-t-md" style={{ height: `${h}%` }} />
+                    <div
+                      className="w-full bg-primary/40 group-hover:bg-primary/60 rounded-t-md"
+                      style={{ height: `${h}%` }}
+                    />
                   </div>
-                  <span className="text-[10px] text-muted-foreground font-medium uppercase mt-2">Seg</span>
+                  <span className="text-[10px] text-muted-foreground font-medium uppercase mt-2">
+                    Seg
+                  </span>
                 </div>
               ))}
             </div>
@@ -118,7 +130,7 @@ function UserDashboard() {
           <div className="card-premium p-6">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-lg font-bold flex items-center gap-2">
-                <History className="w-5 h-5 text-primary" />
+                <HistoryIcon className="w-5 h-5 text-primary" />
                 Transações Recentes
               </h2>
               <button className="text-sm font-medium text-primary hover:underline flex items-center gap-1">
@@ -128,23 +140,55 @@ function UserDashboard() {
             </div>
             <div className="flex flex-col">
               {[
-                { label: 'Supermercado Silva', cat: 'Alimentação', val: -184.50, date: 'Hoje', icon: '🛒' },
-                { label: 'Salário Empresa X', cat: 'Renda', val: 5200.00, date: 'Ontem', icon: '💰' },
-                { label: 'Netflix Streaming', cat: 'Lazer', val: -55.90, date: '02 Mar', icon: '🍿' },
-                { label: 'Posto Shell', cat: 'Transporte', val: -220.00, date: '01 Mar', icon: '⛽' },
+                {
+                  label: 'Supermercado Silva',
+                  cat: 'Alimentação',
+                  val: -184.5,
+                  date: 'Hoje',
+                  icon: '🛒',
+                },
+                {
+                  label: 'Salário Empresa X',
+                  cat: 'Renda',
+                  val: 5200.0,
+                  date: 'Ontem',
+                  icon: '💰',
+                },
+                {
+                  label: 'Netflix Streaming',
+                  cat: 'Lazer',
+                  val: -55.9,
+                  date: '02 Mar',
+                  icon: '🍿',
+                },
+                {
+                  label: 'Posto Shell',
+                  cat: 'Transporte',
+                  val: -220.0,
+                  date: '01 Mar',
+                  icon: '⛽',
+                },
               ].map((t, i) => (
-                <div key={i} className="flex items-center justify-between py-4 border-b border-border last:border-0 hover:bg-muted/30 px-2 -mx-2 rounded-lg transition-smooth cursor-pointer">
+                <div
+                  key={i}
+                  className="flex items-center justify-between py-4 border-b border-border last:border-0 hover:bg-muted/30 px-2 -mx-2 rounded-lg transition-smooth cursor-pointer"
+                >
                   <div className="flex items-center gap-4">
                     <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-lg shadow-sm">
                       {t.icon}
                     </div>
                     <div>
                       <p className="font-semibold text-sm">{t.label}</p>
-                      <p className="text-xs text-muted-foreground">{t.cat} • {t.date}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {t.cat} • {t.date}
+                      </p>
                     </div>
                   </div>
-                  <p className={`font-bold text-sm ${t.val > 0 ? 'text-emerald-500' : 'text-foreground'}`}>
-                    {t.val > 0 ? '+' : ''} {t.val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                  <p
+                    className={`font-bold text-sm ${t.val > 0 ? 'text-emerald-500' : 'text-foreground'}`}
+                  >
+                    {t.val > 0 ? '+' : ''}{' '}
+                    {t.val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                   </p>
                 </div>
               ))}
@@ -171,7 +215,9 @@ function UserDashboard() {
                 <div key={b.label}>
                   <div className="flex justify-between text-xs font-medium mb-1.5">
                     <span>{b.label}</span>
-                    <span className="text-muted-foreground">R$ {b.spent} / R$ {b.limit}</span>
+                    <span className="text-muted-foreground">
+                      R$ {b.spent} / R$ {b.limit}
+                    </span>
                   </div>
                   <div className="h-2 bg-muted rounded-full overflow-hidden">
                     <div
@@ -189,7 +235,9 @@ function UserDashboard() {
 
           {/* Accounts Mini */}
           <div className="card-premium p-6">
-            <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-4">Suas Contas</h2>
+            <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-4">
+              Suas Contas
+            </h2>
             <div className="flex flex-col gap-3">
               <div className="flex items-center justify-between p-3 rounded-xl bg-muted/50 border border-border">
                 <div className="flex items-center gap-3">
@@ -214,5 +262,5 @@ function UserDashboard() {
         </div>
       </div>
     </div>
-  )
+  );
 }

@@ -1,4 +1,4 @@
-import { Link } from '@tanstack/react-router'
+import { Link } from '@tanstack/react-router';
 import {
   LayoutDashboard,
   Receipt,
@@ -6,9 +6,9 @@ import {
   PieChart,
   FileUp,
   Settings,
-  CircleDollarSign
-} from 'lucide-react'
-import ThemeToggle from './ThemeToggle'
+  CircleDollarSign,
+} from 'lucide-react';
+import ThemeToggle from './ThemeToggle';
 
 export default function Header() {
   return (
@@ -80,5 +80,5 @@ export default function Header() {
         </div>
       </nav>
     </header>
-  )
+  );
 }
