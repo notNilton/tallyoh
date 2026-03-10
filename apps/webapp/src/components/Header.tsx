@@ -7,10 +7,15 @@ import {
   FileUp,
   Settings,
   CircleDollarSign,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
+import { usePrivacy } from '../lib/privacy';
 
 export default function Header() {
+  const { privacyMode, togglePrivacy } = usePrivacy();
+
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-background/80 px-4 backdrop-blur-lg">
       <nav className="max-w-7xl mx-auto flex flex-wrap items-center gap-x-6 gap-y-2 py-3 sm:py-4">
@@ -70,6 +75,13 @@ export default function Header() {
         </div>
 
         <div className="ml-auto flex items-center gap-2">
+          <button
+            onClick={togglePrivacy}
+            className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-accent transition-smooth"
+            title="Modo Oculto"
+          >
+            {privacyMode ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+          </button>
           <Link
             to="/settings"
             className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-accent transition-smooth"

@@ -1,4 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
+import PrivacyAmount from '../components/PrivacyAmount';
 import { Plus, Target, Flame, Lightbulb, ArrowRight, ShieldCheck } from 'lucide-react';
 
 export const Route = createFileRoute('/budgets')({
@@ -31,11 +32,10 @@ function BudgetProgress({
       </div>
       <div>
         <div className="flex items-end justify-between mb-2">
-          <p className="text-2xl font-bold font-display tracking-tight">
-            R$ {spent.toLocaleString('pt-BR')}
-            <span className="text-muted-foreground text-sm font-medium">
-              {' '}
-              / R$ {limit.toLocaleString('pt-BR')}
+          <p className="text-2xl font-bold font-display tracking-tight flex items-center gap-1">
+            <PrivacyAmount value={spent} />
+            <span className="text-muted-foreground text-sm font-medium flex items-center gap-1">
+              / <PrivacyAmount value={limit} />
             </span>
           </p>
           <p className={`text-xs font-bold ${isOver ? 'text-rose-500' : 'text-primary'}`}>
@@ -50,11 +50,12 @@ function BudgetProgress({
         </div>
       </div>
       <div className="pt-2 flex items-center justify-between border-t border-border mt-2">
-        <p className="text-[10px] text-muted-foreground font-medium">
+        <p className="text-[10px] text-muted-foreground font-medium flex items-center gap-1">
           RESTANTE:{' '}
-          <span className={isOver ? 'text-rose-500' : 'text-foreground'}>
-            R$ {Math.max(limit - spent, 0).toLocaleString('pt-BR')}
-          </span>
+          <PrivacyAmount
+            value={Math.max(limit - spent, 0)}
+            className={isOver ? 'text-rose-500' : 'text-foreground'}
+          />
         </p>
         <button className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground transition-smooth">
           <Plus className="w-4 h-4" />
@@ -90,7 +91,10 @@ function BudgetsPage() {
             <p className="text-indigo-100 text-xs font-bold uppercase tracking-widest mb-1">
               Reserva Mensal
             </p>
-            <h2 className="text-4xl font-black font-display tracking-tight">R$ 2.500,00</h2>
+            <PrivacyAmount
+              value={2500}
+              className="text-4xl font-black font-display tracking-tight block"
+            />
             <p className="text-indigo-100/70 text-sm mt-2">
               Você já economizou 80% da sua meta este mês.
             </p>

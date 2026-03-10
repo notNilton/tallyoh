@@ -1,4 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
+import PrivacyAmount from '../components/PrivacyAmount';
 import {
   Plus,
   Wallet,
@@ -22,7 +23,7 @@ function AccountCard({
   icon: Icon,
 }: {
   name: string;
-  balance: string;
+  balance: React.ReactNode;
   type: string;
   color: string;
   icon: LucideIcon;
@@ -81,20 +82,23 @@ function AccountsPage() {
           <p className="text-primary font-bold text-xs uppercase tracking-[0.2em] mb-2">
             Patrimônio Líquido
           </p>
-          <p className="text-5xl font-black font-display tracking-tight">R$ 42.850,00</p>
+          <PrivacyAmount
+            value={42850}
+            className="text-5xl font-black font-display tracking-tight block"
+          />
         </div>
         <div className="flex gap-4 relative">
           <div className="text-center px-6 border-r border-primary/10">
             <p className="text-muted-foreground text-[10px] font-bold uppercase mb-1">
               Total Ativos
             </p>
-            <p className="text-emerald-500 font-bold">R$ 48.000</p>
+            <PrivacyAmount value={48000} className="text-emerald-500 font-bold block" />
           </div>
           <div className="text-center px-6">
             <p className="text-muted-foreground text-[10px] font-bold uppercase mb-1">
               Total Passivos
             </p>
-            <p className="text-rose-500 font-bold">R$ 5.150</p>
+            <PrivacyAmount value={5150} className="text-rose-500 font-bold block" />
           </div>
         </div>
       </div>
@@ -103,28 +107,28 @@ function AccountsPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <AccountCard
           name="Nubank Principal"
-          balance="R$ 4.250,00"
+          balance={<PrivacyAmount value={4250} />}
           type="Corrente"
           color="indigo-500"
           icon={Wallet}
         />
         <AccountCard
           name="Conta Salário Itaú"
-          balance="R$ 8.200,00"
+          balance={<PrivacyAmount value={8200} />}
           type="Corrente"
           color="emerald-500"
           icon={Building}
         />
         <AccountCard
           name="Reserva de Emergência"
-          balance="R$ 25.000,00"
+          balance={<PrivacyAmount value={25000} />}
           type="Investimento"
           color="blue-500"
           icon={PiggyBank}
         />
         <AccountCard
           name="Cartão Infinite"
-          balance="-R$ 3.840,50"
+          balance={<PrivacyAmount value={-3840.5} />}
           type="Cartão"
           color="violet-500"
           icon={CreditCard}

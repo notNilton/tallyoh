@@ -1,4 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
+import PrivacyAmount from '../components/PrivacyAmount';
 import {
   Plus,
   ArrowUpCircle,
@@ -26,7 +27,7 @@ function MetricCard({
   color,
 }: {
   title: string;
-  value: string;
+  value: React.ReactNode;
   detail: string;
   icon: LucideIcon;
   color: string;
@@ -66,28 +67,28 @@ function UserDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <MetricCard
           title="Saldo Total"
-          value="R$ 12.450,00"
+          value={<PrivacyAmount value={12450} className="font-display" />}
           detail="Em 4 contas"
           icon={CreditCard}
           color="indigo-500"
         />
         <MetricCard
           title="Receitas (Mar)"
-          value="R$ 8.200,00"
+          value={<PrivacyAmount value={8200} className="font-display" />}
           detail="+R$ 1.200 vs Fev"
           icon={ArrowUpCircle}
           color="emerald-500"
         />
         <MetricCard
           title="Despesas (Mar)"
-          value="R$ 3.840,50"
+          value={<PrivacyAmount value={3840.5} className="font-display" />}
           detail="46% do planejado"
           icon={ArrowDownCircle}
           color="rose-500"
         />
         <MetricCard
           title="Pode Gastar"
-          value="R$ 2.150,00"
+          value={<PrivacyAmount value={2150} className="font-display" />}
           detail="Safe-to-Spend"
           icon={ShieldCheck}
           color="amber-500"
@@ -184,12 +185,11 @@ function UserDashboard() {
                       </p>
                     </div>
                   </div>
-                  <p
+                  <PrivacyAmount
+                    value={t.val}
+                    showSign={true}
                     className={`font-bold text-sm ${t.val > 0 ? 'text-emerald-500' : 'text-foreground'}`}
-                  >
-                    {t.val > 0 ? '+' : ''}{' '}
-                    {t.val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                  </p>
+                  />
                 </div>
               ))}
             </div>
@@ -216,7 +216,7 @@ function UserDashboard() {
                   <div className="flex justify-between text-xs font-medium mb-1.5">
                     <span>{b.label}</span>
                     <span className="text-muted-foreground">
-                      R$ {b.spent} / R$ {b.limit}
+                      <PrivacyAmount value={b.spent} /> / <PrivacyAmount value={b.limit} />
                     </span>
                   </div>
                   <div className="h-2 bg-muted rounded-full overflow-hidden">
@@ -246,7 +246,7 @@ function UserDashboard() {
                   </div>
                   <span className="text-sm font-medium">Nubank</span>
                 </div>
-                <span className="text-sm font-bold">R$ 4.250</span>
+                <PrivacyAmount value={4250} className="text-sm font-bold" />
               </div>
               <div className="flex items-center justify-between p-3 rounded-xl bg-muted/50 border border-border">
                 <div className="flex items-center gap-3">
@@ -255,7 +255,7 @@ function UserDashboard() {
                   </div>
                   <span className="text-sm font-medium">Itaú</span>
                 </div>
-                <span className="text-sm font-bold">R$ 8.200</span>
+                <PrivacyAmount value={8200} className="text-sm font-bold" />
               </div>
             </div>
           </div>
