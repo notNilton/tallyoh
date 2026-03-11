@@ -9,6 +9,8 @@ import {
   CircleDollarSign,
   Eye,
   EyeOff,
+  Target,
+  CarFront,
 } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
 import { usePrivacy } from '../lib/privacy';
@@ -63,6 +65,22 @@ export default function Header() {
           >
             <PieChart className="w-4 h-4" />
             Orçamentos
+          </Link>
+          <Link
+            to="/goals"
+            className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-smooth"
+            activeProps={{ className: 'text-foreground bg-accent' }}
+          >
+            <Target className="w-4 h-4" />
+            Metas
+          </Link>
+          <Link
+            to="/vehicles"
+            className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-smooth"
+            activeProps={{ className: 'text-foreground bg-accent' }}
+          >
+            <CarFront className="w-4 h-4" />
+            Veículos
           </Link>
           <Link
             to="/import"

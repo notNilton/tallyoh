@@ -9,13 +9,20 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as VehiclesRouteImport } from './routes/vehicles'
 import { Route as TransactionsRouteImport } from './routes/transactions'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as ImportRouteImport } from './routes/import'
+import { Route as GoalsRouteImport } from './routes/goals'
 import { Route as BudgetsRouteImport } from './routes/budgets'
 import { Route as AccountsRouteImport } from './routes/accounts'
 import { Route as IndexRouteImport } from './routes/index'
 
+const VehiclesRoute = VehiclesRouteImport.update({
+  id: '/vehicles',
+  path: '/vehicles',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TransactionsRoute = TransactionsRouteImport.update({
   id: '/transactions',
   path: '/transactions',
@@ -29,6 +36,11 @@ const SettingsRoute = SettingsRouteImport.update({
 const ImportRoute = ImportRouteImport.update({
   id: '/import',
   path: '/import',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GoalsRoute = GoalsRouteImport.update({
+  id: '/goals',
+  path: '/goals',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BudgetsRoute = BudgetsRouteImport.update({
@@ -51,26 +63,32 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/accounts': typeof AccountsRoute
   '/budgets': typeof BudgetsRoute
+  '/goals': typeof GoalsRoute
   '/import': typeof ImportRoute
   '/settings': typeof SettingsRoute
   '/transactions': typeof TransactionsRoute
+  '/vehicles': typeof VehiclesRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/accounts': typeof AccountsRoute
   '/budgets': typeof BudgetsRoute
+  '/goals': typeof GoalsRoute
   '/import': typeof ImportRoute
   '/settings': typeof SettingsRoute
   '/transactions': typeof TransactionsRoute
+  '/vehicles': typeof VehiclesRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/accounts': typeof AccountsRoute
   '/budgets': typeof BudgetsRoute
+  '/goals': typeof GoalsRoute
   '/import': typeof ImportRoute
   '/settings': typeof SettingsRoute
   '/transactions': typeof TransactionsRoute
+  '/vehicles': typeof VehiclesRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -78,32 +96,53 @@ export interface FileRouteTypes {
     | '/'
     | '/accounts'
     | '/budgets'
+    | '/goals'
     | '/import'
     | '/settings'
     | '/transactions'
+    | '/vehicles'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/accounts' | '/budgets' | '/import' | '/settings' | '/transactions'
+  to:
+    | '/'
+    | '/accounts'
+    | '/budgets'
+    | '/goals'
+    | '/import'
+    | '/settings'
+    | '/transactions'
+    | '/vehicles'
   id:
     | '__root__'
     | '/'
     | '/accounts'
     | '/budgets'
+    | '/goals'
     | '/import'
     | '/settings'
     | '/transactions'
+    | '/vehicles'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AccountsRoute: typeof AccountsRoute
   BudgetsRoute: typeof BudgetsRoute
+  GoalsRoute: typeof GoalsRoute
   ImportRoute: typeof ImportRoute
   SettingsRoute: typeof SettingsRoute
   TransactionsRoute: typeof TransactionsRoute
+  VehiclesRoute: typeof VehiclesRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/vehicles': {
+      id: '/vehicles'
+      path: '/vehicles'
+      fullPath: '/vehicles'
+      preLoaderRoute: typeof VehiclesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/transactions': {
       id: '/transactions'
       path: '/transactions'
@@ -123,6 +162,13 @@ declare module '@tanstack/react-router' {
       path: '/import'
       fullPath: '/import'
       preLoaderRoute: typeof ImportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/goals': {
+      id: '/goals'
+      path: '/goals'
+      fullPath: '/goals'
+      preLoaderRoute: typeof GoalsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/budgets': {
@@ -153,9 +199,11 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AccountsRoute: AccountsRoute,
   BudgetsRoute: BudgetsRoute,
+  GoalsRoute: GoalsRoute,
   ImportRoute: ImportRoute,
   SettingsRoute: SettingsRoute,
   TransactionsRoute: TransactionsRoute,
+  VehiclesRoute: VehiclesRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
