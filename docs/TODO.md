@@ -93,37 +93,3 @@ _(Nenhum item iniciado)_
 1. **Frontend**: Desenvolver as páginas/telas listadas em Phase 2 que já possuem suporte no Backend (ex: Metas e Veículos).
 2. **Integração**: Conectar o Frontend ao Backend nos fluxos de autenticação, accounts e transactions, garantindo que o básico (CRUD) esteja liso.
 3. **Cartões de Crédito**: Implementar a lógica de faturas (`CreditCardStatement`) em cima do módulo `accounts` atual.
-
-Para deixar o [TransactionModal](cci:1://file:///c:/Users/notNilton/Workspace/nilbyte/project-budget/apps/webapp/src/routes/transactions.tsx:60:0-176:1) realmente completo e com nível **Premium**, aqui estão as sugestões do que podemos adicionar:
-
-### 1. **Toggle de Despesa vs Receita**
-
-Atualmente, o modal comum parece focado em gastos. Adicionar um seletor visual (Check/Toggle) para alternar entre **Entrada** (Verde) e **Saída** (Vermelho) mudaria a cor de destaque do modal dinamicamente.
-
-### 2. **Tipo de Combustível e Posto (Abastecimento)**
-
-Para o pilar de Veículos, é muito útil saber:
-
-- **Tipo de Combustível**: (Gasolina, Etanol, Diesel, GNV).
-- **Nome do Posto**: Um campo de texto simples para histórico.
-
-### 3. **Observações/Notas**
-
-Um campo de texto (`textarea`) pequeno para anotações rápidas (ex: "Almoço com cliente X" ou "Troca de óleo junto com o abastecimento").
-
-### 4. **Anexar Comprovante (Placeholder)**
-
-Um pequeno ícone de "clipe" ou "câmera" que simule a função de anexar a foto da nota fiscal ou do recibo.
-
-### 5. **Repetição/Recorrência**
-
-Uma opção de "Repetir mensalmente" para contas fixas (aluguel, internet) que já criaria os lançamentos futuros.
-
-### 6. **Feedback Visual de "Salvando"**
-
-Adicionar um estado de `loading` no botão de salvar para que, ao clicar, ele mostre um spinner ou mude o texto para "Processando...", dando uma sensação de app robusto.
-
----
-
-**Qual dessas você gostaria que eu implementasse agora?**
-Se quiser, posso aplicar o **Toggle de Receita/Despesa** e o **Tipo de Combustível** agora mesmo para dar um salto de qualidade na ferramenta.
