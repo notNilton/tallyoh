@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { Target, Plus, CheckCircle2, CircleDashed, TrendingUp } from 'lucide-react';
+import { Plus, CheckCircle2, CircleDashed } from 'lucide-react';
 import PrivacyAmount from '../components/PrivacyAmount';
 
 export const Route = createFileRoute('/goals')({
@@ -12,23 +12,18 @@ function GoalCard({
   target,
   deadline,
   icon,
-  color,
 }: {
   title: string;
   current: number;
   target: number;
   deadline: string;
   icon: string;
-  color: string;
 }) {
   const percent = Math.min((current / target) * 100, 100);
   const isCompleted = percent >= 100;
 
   return (
-    <div className="card-premium p-6 group cursor-pointer hover:-translate-y-1 transition-transform relative overflow-hidden">
-      <div
-        className={`absolute top-0 right-0 w-24 h-24 ${color}/5 rounded-full blur-2xl -mr-12 -mt-12 group-hover:scale-125 transition-smooth`}
-      />
+    <div className="card-premium p-6 group cursor-pointer hover:-translate-y-0.5 transition-transform relative overflow-hidden">
       <div className="flex items-center justify-between mb-6">
         <div
           className={`w-12 h-12 rounded-xl flex items-center justify-center text-2xl bg-muted/50 border border-border shadow-sm`}
@@ -64,9 +59,9 @@ function GoalCard({
           </div>
         </div>
 
-        <div className="h-2 bg-muted rounded-full overflow-hidden">
+        <div className="h-1.5 bg-muted rounded-full overflow-hidden">
           <div
-            className={`h-full transition-smooth ${isCompleted ? 'bg-emerald-500' : color}`}
+            className={`h-full transition-smooth ${isCompleted ? 'bg-emerald-600' : 'bg-primary'}`}
             style={{ width: `${percent}%` }}
           />
         </div>
@@ -93,33 +88,24 @@ function GoalsPage() {
 
       {/* Overview Block */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="md:col-span-2 bg-primary/5 rounded-3xl p-8 border border-primary/10 flex flex-col justify-center relative overflow-hidden">
-          <div className="absolute top-0 right-0 p-8 text-primary/5 select-none pointer-events-none">
-            <TrendingUp className="w-32 h-32" />
-          </div>
-          <p className="text-primary font-bold text-xs uppercase tracking-[0.2em] mb-2 relative">
-            Total Acumulado em Metas
+        <div className="md:col-span-2 bg-muted/40 rounded-2xl p-8 border border-border flex flex-col justify-center relative overflow-hidden">
+          <p className="text-muted-foreground font-bold text-[10px] uppercase tracking-widest mb-2 relative">
+            Total Acumulado
           </p>
           <PrivacyAmount
             value={68500}
-            className="text-5xl font-black font-display tracking-tight relative block mb-2"
+            className="text-4xl font-bold font-display tracking-tight relative block mb-2"
           />
-          <p className="text-sm font-medium text-muted-foreground relative">
-            Esse valor corresponde a <span className="text-primary font-bold">65%</span> de todo o
-            patrimônio planejado.
+          <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider relative">
+            EQUIVALE A <span className="text-primary">65%</span> DO PLANEJADO
           </p>
         </div>
 
-        <div className="card-premium p-8 flex flex-col justify-center items-center text-center gap-4">
-          <div className="w-16 h-16 rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
-            <Target className="w-8 h-8" />
-          </div>
-          <div>
-            <p className="text-3xl font-bold font-display">1</p>
-            <p className="text-sm text-muted-foreground font-medium uppercase tracking-wider mt-1">
-              Meta Atingida
-            </p>
-          </div>
+        <div className="card-premium p-8 flex flex-col justify-center items-center text-center gap-2">
+          <p className="text-3xl font-bold font-display">1</p>
+          <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">
+            Meta Atingida
+          </p>
         </div>
       </div>
 
@@ -131,7 +117,6 @@ function GoalsPage() {
           target={25000}
           deadline="Concluído"
           icon="🛡️"
-          color="bg-emerald-500"
         />
         <GoalCard
           title="Viagem Europa 2027"
@@ -139,7 +124,6 @@ function GoalsPage() {
           target={35000}
           deadline="Dezembro 2026"
           icon="✈️"
-          color="bg-indigo-500"
         />
         <GoalCard
           title="Entrada Apartamento"
@@ -147,7 +131,6 @@ function GoalsPage() {
           target={150000}
           deadline="Março 2030"
           icon="🏢"
-          color="bg-blue-500"
         />
 
         <div className="rounded-2xl border-2 border-dashed border-border flex items-center justify-center p-6 text-muted-foreground hover:bg-muted/30 transition-smooth cursor-pointer group min-h-[250px]">

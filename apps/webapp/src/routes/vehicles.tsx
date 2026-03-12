@@ -21,22 +21,20 @@ function VehicleCard({
 }) {
   return (
     <div className="card-premium p-6 group cursor-pointer flex flex-col gap-6 relative overflow-hidden">
-      <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -mr-16 -mt-16 group-hover:scale-110 transition-smooth" />
-
       <div className="relative flex justify-between items-start">
         <div className="flex gap-4 items-center">
-          <div className="w-14 h-14 rounded-2xl bg-muted flex items-center justify-center border border-border">
-            <CarFront className="w-7 h-7 text-muted-foreground" />
+          <div className="w-12 h-12 rounded-xl bg-muted/50 flex items-center justify-center border border-border">
+            <CarFront className="w-6 h-6 text-muted-foreground" />
           </div>
           <div>
-            <h3 className="font-display font-bold text-xl tracking-tight">{model}</h3>
-            <p className="text-sm text-muted-foreground font-medium flex gap-2">
+            <h3 className="font-display font-bold text-lg tracking-tight">{model}</h3>
+            <p className="text-[11px] text-muted-foreground font-bold uppercase tracking-wider flex gap-2">
               <span>{year}</span> • <span>{colorStr}</span>
             </p>
           </div>
         </div>
-        <div className="px-3 py-1 rounded border border-border bg-card shadow-sm">
-          <span className="font-mono font-bold text-sm tracking-widest">{plate}</span>
+        <div className="px-2.5 py-1 rounded border border-border bg-muted/20">
+          <span className="font-mono font-bold text-[11px] tracking-widest">{plate}</span>
         </div>
       </div>
 
@@ -129,12 +127,12 @@ function VehiclesPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 card-premium p-6">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-lg font-bold flex items-center gap-2">
-              <History className="w-5 h-5 text-primary" />
-              Últimos Lançamentos
+            <h2 className="text-sm font-bold uppercase tracking-widest flex items-center gap-2 text-muted-foreground">
+              <History className="w-4 h-4" />
+              Histórico
             </h2>
-            <button className="text-sm font-medium text-primary hover:underline">
-              Ver histórico
+            <button className="text-xs font-bold text-primary hover:underline uppercase tracking-tighter">
+              Ver tudo
             </button>
           </div>
           <div className="flex flex-col">

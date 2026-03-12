@@ -24,24 +24,26 @@ function MetricCard({
   value,
   detail,
   icon: Icon,
-  color,
 }: {
   title: string;
   value: React.ReactNode;
   detail: string;
   icon: LucideIcon;
-  color: string;
 }) {
   return (
     <div className="card-premium p-6 flex flex-col gap-4">
       <div className="flex items-center justify-between">
-        <div className={`p-2 rounded-lg ${color}/10 text-${color}`}>
+        <div className={`p-2 rounded-lg bg-muted/50 text-muted-foreground border border-border/50`}>
           <Icon className="w-5 h-5" />
         </div>
-        <span className="text-xs font-medium text-muted-foreground">{detail}</span>
+        <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+          {detail}
+        </span>
       </div>
       <div>
-        <h3 className="text-sm font-medium text-muted-foreground">{title}</h3>
+        <h3 className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
+          {title}
+        </h3>
         <p className="text-2xl font-bold font-display mt-1">{value}</p>
       </div>
     </div>
@@ -70,28 +72,24 @@ function UserDashboard() {
           value={<PrivacyAmount value={12450} className="font-display" />}
           detail="Em 4 contas"
           icon={CreditCard}
-          color="indigo-500"
         />
         <MetricCard
           title="Receitas (Mar)"
           value={<PrivacyAmount value={8200} className="font-display" />}
           detail="+R$ 1.200 vs Fev"
           icon={ArrowUpCircle}
-          color="emerald-500"
         />
         <MetricCard
           title="Despesas (Mar)"
           value={<PrivacyAmount value={3840.5} className="font-display" />}
           detail="46% do planejado"
           icon={ArrowDownCircle}
-          color="rose-500"
         />
         <MetricCard
           title="Pode Gastar"
           value={<PrivacyAmount value={2150} className="font-display" />}
           detail="Safe-to-Spend"
           icon={ShieldCheck}
-          color="amber-500"
         />
       </div>
 
@@ -101,21 +99,21 @@ function UserDashboard() {
           {/* Spending Chart */}
           <div className="card-premium p-6">
             <div className="flex items-center justify-between mb-8">
-              <h2 className="text-lg font-bold flex items-center gap-2">
-                <TrendingUp className="w-5 h-5 text-primary" />
+              <h2 className="text-sm font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                <TrendingUp className="w-4 h-4" />
                 Fluxo de Caixa
               </h2>
-              <select className="bg-muted text-xs font-medium px-3 py-1.5 rounded-lg border-none focus:ring-0">
-                <option>Últimos 7 dias</option>
-                <option>Últimos 30 dias</option>
+              <select className="bg-muted text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded border-none focus:ring-0 cursor-pointer">
+                <option>7 dias</option>
+                <option>30 dias</option>
               </select>
             </div>
             <div className="h-[250px] flex items-end gap-3 px-2">
               {[30, 45, 25, 60, 80, 55, 90].map((h, i) => (
                 <div key={i} className="flex-1 flex flex-col gap-1 items-center group">
-                  <div className="w-full bg-primary/10 group-hover:bg-primary/20 rounded-t-md transition-smooth relative h-[180px] flex flex-col justify-end">
+                  <div className="w-full bg-muted/30 group-hover:bg-muted/50 rounded-t h-[180px] flex flex-col justify-end overflow-hidden">
                     <div
-                      className="w-full bg-primary/40 group-hover:bg-primary/60 rounded-t-md"
+                      className="w-full bg-primary/40 group-hover:bg-primary/60 transition-smooth"
                       style={{ height: `${h}%` }}
                     />
                   </div>
@@ -130,13 +128,13 @@ function UserDashboard() {
           {/* Recent Transactions */}
           <div className="card-premium p-6">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-lg font-bold flex items-center gap-2">
-                <HistoryIcon className="w-5 h-5 text-primary" />
-                Transações Recentes
+              <h2 className="text-sm font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                <HistoryIcon className="w-4 h-4" />
+                Atividade Recente
               </h2>
-              <button className="text-sm font-medium text-primary hover:underline flex items-center gap-1">
-                Ver tudo
-                <ChevronRight className="w-4 h-4" />
+              <button className="text-[11px] font-bold text-primary uppercase tracking-widest hover:underline flex items-center gap-1">
+                Ver Tudo
+                <ChevronRight className="w-3.5 h-3.5" />
               </button>
             </div>
             <div className="flex flex-col">
@@ -201,62 +199,90 @@ function UserDashboard() {
           {/* Budget Overview */}
           <div className="card-premium p-6">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-lg font-bold flex items-center gap-2">
-                <PieChart className="w-5 h-5 text-primary" />
+              <h2 className="text-sm font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                <PieChart className="w-4 h-4" />
                 Orçamentos
               </h2>
             </div>
             <div className="flex flex-col gap-5">
               {[
-                { label: 'Alimentação', spent: 850, limit: 1200, color: 'bg-indigo-500' },
-                { label: 'Transporte', spent: 420, limit: 500, color: 'bg-emerald-500' },
-                { label: 'Lazer', spent: 300, limit: 400, color: 'bg-amber-500' },
+                { label: 'Alimentação', spent: 850, limit: 1200 },
+                { label: 'Transporte', spent: 420, limit: 500 },
+                { label: 'Lazer', spent: 300, limit: 400 },
               ].map((b) => (
                 <div key={b.label}>
-                  <div className="flex justify-between text-xs font-medium mb-1.5">
+                  <div className="flex justify-between text-[11px] font-bold uppercase tracking-wider mb-1.5">
                     <span>{b.label}</span>
-                    <span className="text-muted-foreground">
-                      <PrivacyAmount value={b.spent} /> / <PrivacyAmount value={b.limit} />
+                    <span className="text-muted-foreground font-mono">
+                      {((b.spent / b.limit) * 100).toFixed(0)}%
                     </span>
                   </div>
-                  <div className="h-2 bg-muted rounded-full overflow-hidden">
+                  <div className="h-1.5 bg-muted rounded-full overflow-hidden">
                     <div
-                      className={`h-full ${b.color} transition-smooth`}
+                      className={`h-full bg-primary transition-smooth`}
                       style={{ width: `${(b.spent / b.limit) * 100}%` }}
                     />
                   </div>
                 </div>
               ))}
             </div>
-            <button className="w-full mt-6 py-2 px-4 rounded-xl border border-border text-sm font-semibold hover:bg-muted transition-smooth">
-              Configurar Metas
+            <button className="w-full mt-6 py-2.5 rounded-lg border border-border text-[11px] font-bold uppercase tracking-widest hover:bg-muted transition-smooth">
+              Gerenciar
             </button>
           </div>
 
-          {/* Accounts Mini */}
+          {/* Accounts Section */}
           <div className="card-premium p-6">
-            <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-4">
-              Suas Contas
-            </h2>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-sm font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                <Wallet className="w-4 h-4" />
+                Suas Contas
+              </h2>
+              <button className="text-[10px] font-bold text-primary uppercase tracking-widest hover:underline">
+                Gerenciar
+              </button>
+            </div>
             <div className="flex flex-col gap-3">
-              <div className="flex items-center justify-between p-3 rounded-xl bg-muted/50 border border-border">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-indigo-500/20 text-indigo-500 flex items-center justify-center">
-                    <Wallet className="w-4 h-4" />
+              {[
+                {
+                  label: 'Nubank',
+                  val: 4250,
+                  icon: <Wallet className="w-4 h-4" />,
+                  color: 'bg-indigo-500/10 text-indigo-500',
+                },
+                {
+                  label: 'Itaú',
+                  val: 8200,
+                  icon: <Building className="w-4 h-4" />,
+                  color: 'bg-emerald-500/10 text-emerald-500',
+                },
+                {
+                  label: 'XP Investimentos',
+                  val: 15600,
+                  icon: <TrendingUp className="w-4 h-4" />,
+                  color: 'bg-amber-500/10 text-amber-500',
+                },
+              ].map((acc, i) => (
+                <div
+                  key={i}
+                  className="flex items-center justify-between p-3 rounded-xl hover:bg-muted/50 transition-smooth group cursor-pointer border border-transparent hover:border-border"
+                >
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={`w-9 h-9 rounded-lg flex items-center justify-center ${acc.color}`}
+                    >
+                      {acc.icon}
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold">{acc.label}</p>
+                      <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
+                        Principal
+                      </p>
+                    </div>
                   </div>
-                  <span className="text-sm font-medium">Nubank</span>
+                  <PrivacyAmount value={acc.val} className="text-sm font-bold" />
                 </div>
-                <PrivacyAmount value={4250} className="text-sm font-bold" />
-              </div>
-              <div className="flex items-center justify-between p-3 rounded-xl bg-muted/50 border border-border">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-500 flex items-center justify-center">
-                    <Building className="w-4 h-4" />
-                  </div>
-                  <span className="text-sm font-medium">Itaú</span>
-                </div>
-                <PrivacyAmount value={8200} className="text-sm font-bold" />
-              </div>
+              ))}
             </div>
           </div>
         </div>

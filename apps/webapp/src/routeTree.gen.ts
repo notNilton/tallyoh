@@ -12,8 +12,10 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as VehiclesRouteImport } from './routes/vehicles'
 import { Route as TransactionsRouteImport } from './routes/transactions'
 import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as MoreRouteImport } from './routes/more'
 import { Route as ImportRouteImport } from './routes/import'
 import { Route as GoalsRouteImport } from './routes/goals'
+import { Route as EvolutionRouteImport } from './routes/evolution'
 import { Route as BudgetsRouteImport } from './routes/budgets'
 import { Route as AccountsRouteImport } from './routes/accounts'
 import { Route as IndexRouteImport } from './routes/index'
@@ -33,6 +35,11 @@ const SettingsRoute = SettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MoreRoute = MoreRouteImport.update({
+  id: '/more',
+  path: '/more',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ImportRoute = ImportRouteImport.update({
   id: '/import',
   path: '/import',
@@ -41,6 +48,11 @@ const ImportRoute = ImportRouteImport.update({
 const GoalsRoute = GoalsRouteImport.update({
   id: '/goals',
   path: '/goals',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EvolutionRoute = EvolutionRouteImport.update({
+  id: '/evolution',
+  path: '/evolution',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BudgetsRoute = BudgetsRouteImport.update({
@@ -63,8 +75,10 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/accounts': typeof AccountsRoute
   '/budgets': typeof BudgetsRoute
+  '/evolution': typeof EvolutionRoute
   '/goals': typeof GoalsRoute
   '/import': typeof ImportRoute
+  '/more': typeof MoreRoute
   '/settings': typeof SettingsRoute
   '/transactions': typeof TransactionsRoute
   '/vehicles': typeof VehiclesRoute
@@ -73,8 +87,10 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/accounts': typeof AccountsRoute
   '/budgets': typeof BudgetsRoute
+  '/evolution': typeof EvolutionRoute
   '/goals': typeof GoalsRoute
   '/import': typeof ImportRoute
+  '/more': typeof MoreRoute
   '/settings': typeof SettingsRoute
   '/transactions': typeof TransactionsRoute
   '/vehicles': typeof VehiclesRoute
@@ -84,8 +100,10 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/accounts': typeof AccountsRoute
   '/budgets': typeof BudgetsRoute
+  '/evolution': typeof EvolutionRoute
   '/goals': typeof GoalsRoute
   '/import': typeof ImportRoute
+  '/more': typeof MoreRoute
   '/settings': typeof SettingsRoute
   '/transactions': typeof TransactionsRoute
   '/vehicles': typeof VehiclesRoute
@@ -96,8 +114,10 @@ export interface FileRouteTypes {
     | '/'
     | '/accounts'
     | '/budgets'
+    | '/evolution'
     | '/goals'
     | '/import'
+    | '/more'
     | '/settings'
     | '/transactions'
     | '/vehicles'
@@ -106,8 +126,10 @@ export interface FileRouteTypes {
     | '/'
     | '/accounts'
     | '/budgets'
+    | '/evolution'
     | '/goals'
     | '/import'
+    | '/more'
     | '/settings'
     | '/transactions'
     | '/vehicles'
@@ -116,8 +138,10 @@ export interface FileRouteTypes {
     | '/'
     | '/accounts'
     | '/budgets'
+    | '/evolution'
     | '/goals'
     | '/import'
+    | '/more'
     | '/settings'
     | '/transactions'
     | '/vehicles'
@@ -127,8 +151,10 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AccountsRoute: typeof AccountsRoute
   BudgetsRoute: typeof BudgetsRoute
+  EvolutionRoute: typeof EvolutionRoute
   GoalsRoute: typeof GoalsRoute
   ImportRoute: typeof ImportRoute
+  MoreRoute: typeof MoreRoute
   SettingsRoute: typeof SettingsRoute
   TransactionsRoute: typeof TransactionsRoute
   VehiclesRoute: typeof VehiclesRoute
@@ -157,6 +183,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/more': {
+      id: '/more'
+      path: '/more'
+      fullPath: '/more'
+      preLoaderRoute: typeof MoreRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/import': {
       id: '/import'
       path: '/import'
@@ -169,6 +202,13 @@ declare module '@tanstack/react-router' {
       path: '/goals'
       fullPath: '/goals'
       preLoaderRoute: typeof GoalsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/evolution': {
+      id: '/evolution'
+      path: '/evolution'
+      fullPath: '/evolution'
+      preLoaderRoute: typeof EvolutionRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/budgets': {
@@ -199,8 +239,10 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AccountsRoute: AccountsRoute,
   BudgetsRoute: BudgetsRoute,
+  EvolutionRoute: EvolutionRoute,
   GoalsRoute: GoalsRoute,
   ImportRoute: ImportRoute,
+  MoreRoute: MoreRoute,
   SettingsRoute: SettingsRoute,
   TransactionsRoute: TransactionsRoute,
   VehiclesRoute: VehiclesRoute,
