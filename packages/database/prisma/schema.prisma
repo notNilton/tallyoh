@@ -20,6 +20,7 @@ model User {
     stripeCustomerId    String?   @unique @map("stripe_customer_id")
     revenueCatId        String?   @unique @map("revenue_cat_id")
     subscriptionExpires DateTime? @map("subscription_expires")
+    privacyModeEnabled  Boolean   @default(false) @map("privacy_mode_enabled")
 
     createdAt DateTime @default(now()) @map("created_at")
     updatedAt DateTime @updatedAt @map("updated_at")
@@ -150,6 +151,11 @@ enum TransactionType {
     TRANSFER
 }
 
+enum TransactionClassification {
+    COMMON
+    FUEL
+}
+
 enum TransactionStatus {
     PENDING
     COMPLETED
@@ -208,7 +214,9 @@ model Transaction {
     status TransactionStatus @default(COMPLETED)
 
     attachmentUrl String? @map("attachment_url")
-    currencyCode  String  @default("BRL") @map("currency_code") @db.VarChar(3)
+    currencyCode  String                    @default("BRL") @map("currency_code") @db.VarChar(3)
+    classification TransactionClassification @default(COMMON)
+    isRecurring   Boolean                   @default(false) @map("is_recurring")
 
     statementId String?              @map("statement_id")
     statement   CreditCardStatement? @relation(fields: [statementId], references: [id], onDelete: SetNull)
@@ -361,12 +369,22 @@ model RefuelingLog {
     transactionId String      @unique @map("transaction_id")
     transaction   Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
 
-    odometer      Decimal @db.Decimal(10, 2)
-    fuelLiters    Decimal @map("fuel_liters") @db.Decimal(8, 3)
-    pricePerLiter Decimal @map("price_per_liter") @db.Decimal(8, 3)
-    isFullTank    Boolean @default(true) @map("is_full_tank")
+    fuelType      FuelType?
+    station       String?   @db.VarChar(100)
+    odometer      Decimal   @db.Decimal(10, 2)
+    fuelLiters    Decimal   @map("fuel_liters") @db.Decimal(8, 3)
+    pricePerLiter Decimal   @map("price_per_liter") @db.Decimal(8, 3)
+    isFullTank    Boolean   @default(true) @map("is_full_tank")
 
     createdAt DateTime @default(now()) @map("created_at")
 
     @@map("refueling_logs")
+}
+
+enum FuelType {
+    GASOLINA_COMUM
+    GASOLINA_ADITIVADA
+    ETANOL
+    DIESEL
+    GNV
 }

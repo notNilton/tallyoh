@@ -19,6 +19,9 @@ import { Route as EvolutionRouteImport } from './routes/evolution'
 import { Route as BudgetsRouteImport } from './routes/budgets'
 import { Route as AccountsRouteImport } from './routes/accounts'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as SettingsIndexRouteImport } from './routes/settings/index'
+import { Route as SettingsPersonalInfoRouteImport } from './routes/settings/personal-info'
+import { Route as SettingsDataPrivacyRouteImport } from './routes/settings/data-privacy'
 
 const VehiclesRoute = VehiclesRouteImport.update({
   id: '/vehicles',
@@ -70,6 +73,21 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SettingsIndexRoute = SettingsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => SettingsRoute,
+} as any)
+const SettingsPersonalInfoRoute = SettingsPersonalInfoRouteImport.update({
+  id: '/personal-info',
+  path: '/personal-info',
+  getParentRoute: () => SettingsRoute,
+} as any)
+const SettingsDataPrivacyRoute = SettingsDataPrivacyRouteImport.update({
+  id: '/data-privacy',
+  path: '/data-privacy',
+  getParentRoute: () => SettingsRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -79,9 +97,12 @@ export interface FileRoutesByFullPath {
   '/goals': typeof GoalsRoute
   '/import': typeof ImportRoute
   '/more': typeof MoreRoute
-  '/settings': typeof SettingsRoute
+  '/settings': typeof SettingsRouteWithChildren
   '/transactions': typeof TransactionsRoute
   '/vehicles': typeof VehiclesRoute
+  '/settings/data-privacy': typeof SettingsDataPrivacyRoute
+  '/settings/personal-info': typeof SettingsPersonalInfoRoute
+  '/settings/': typeof SettingsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -91,9 +112,11 @@ export interface FileRoutesByTo {
   '/goals': typeof GoalsRoute
   '/import': typeof ImportRoute
   '/more': typeof MoreRoute
-  '/settings': typeof SettingsRoute
   '/transactions': typeof TransactionsRoute
   '/vehicles': typeof VehiclesRoute
+  '/settings/data-privacy': typeof SettingsDataPrivacyRoute
+  '/settings/personal-info': typeof SettingsPersonalInfoRoute
+  '/settings': typeof SettingsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -104,9 +127,12 @@ export interface FileRoutesById {
   '/goals': typeof GoalsRoute
   '/import': typeof ImportRoute
   '/more': typeof MoreRoute
-  '/settings': typeof SettingsRoute
+  '/settings': typeof SettingsRouteWithChildren
   '/transactions': typeof TransactionsRoute
   '/vehicles': typeof VehiclesRoute
+  '/settings/data-privacy': typeof SettingsDataPrivacyRoute
+  '/settings/personal-info': typeof SettingsPersonalInfoRoute
+  '/settings/': typeof SettingsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -121,6 +147,9 @@ export interface FileRouteTypes {
     | '/settings'
     | '/transactions'
     | '/vehicles'
+    | '/settings/data-privacy'
+    | '/settings/personal-info'
+    | '/settings/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -130,9 +159,11 @@ export interface FileRouteTypes {
     | '/goals'
     | '/import'
     | '/more'
-    | '/settings'
     | '/transactions'
     | '/vehicles'
+    | '/settings/data-privacy'
+    | '/settings/personal-info'
+    | '/settings'
   id:
     | '__root__'
     | '/'
@@ -145,6 +176,9 @@ export interface FileRouteTypes {
     | '/settings'
     | '/transactions'
     | '/vehicles'
+    | '/settings/data-privacy'
+    | '/settings/personal-info'
+    | '/settings/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -155,7 +189,7 @@ export interface RootRouteChildren {
   GoalsRoute: typeof GoalsRoute
   ImportRoute: typeof ImportRoute
   MoreRoute: typeof MoreRoute
-  SettingsRoute: typeof SettingsRoute
+  SettingsRoute: typeof SettingsRouteWithChildren
   TransactionsRoute: typeof TransactionsRoute
   VehiclesRoute: typeof VehiclesRoute
 }
@@ -232,8 +266,45 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/settings/': {
+      id: '/settings/'
+      path: '/'
+      fullPath: '/settings/'
+      preLoaderRoute: typeof SettingsIndexRouteImport
+      parentRoute: typeof SettingsRoute
+    }
+    '/settings/personal-info': {
+      id: '/settings/personal-info'
+      path: '/personal-info'
+      fullPath: '/settings/personal-info'
+      preLoaderRoute: typeof SettingsPersonalInfoRouteImport
+      parentRoute: typeof SettingsRoute
+    }
+    '/settings/data-privacy': {
+      id: '/settings/data-privacy'
+      path: '/data-privacy'
+      fullPath: '/settings/data-privacy'
+      preLoaderRoute: typeof SettingsDataPrivacyRouteImport
+      parentRoute: typeof SettingsRoute
+    }
   }
 }
+
+interface SettingsRouteChildren {
+  SettingsDataPrivacyRoute: typeof SettingsDataPrivacyRoute
+  SettingsPersonalInfoRoute: typeof SettingsPersonalInfoRoute
+  SettingsIndexRoute: typeof SettingsIndexRoute
+}
+
+const SettingsRouteChildren: SettingsRouteChildren = {
+  SettingsDataPrivacyRoute: SettingsDataPrivacyRoute,
+  SettingsPersonalInfoRoute: SettingsPersonalInfoRoute,
+  SettingsIndexRoute: SettingsIndexRoute,
+}
+
+const SettingsRouteWithChildren = SettingsRoute._addFileChildren(
+  SettingsRouteChildren,
+)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
@@ -243,7 +314,7 @@ const rootRouteChildren: RootRouteChildren = {
   GoalsRoute: GoalsRoute,
   ImportRoute: ImportRoute,
   MoreRoute: MoreRoute,
-  SettingsRoute: SettingsRoute,
+  SettingsRoute: SettingsRouteWithChildren,
   TransactionsRoute: TransactionsRoute,
   VehiclesRoute: VehiclesRoute,
 }

@@ -1,4 +1,5 @@
 import {
+  IsBoolean,
   IsDateString,
   IsEnum,
   IsNotEmpty,
@@ -8,7 +9,11 @@ import {
   IsUUID,
   MaxLength,
 } from 'class-validator';
-import { TransactionType } from '@project-budget/database';
+import {
+  TransactionType,
+  TransactionClassification,
+  FuelType,
+} from '@project-budget/database';
 
 export class CreateTransactionDto {
   @IsUUID()
@@ -22,6 +27,14 @@ export class CreateTransactionDto {
   @IsEnum(TransactionType)
   @IsNotEmpty()
   type: TransactionType;
+
+  @IsEnum(TransactionClassification)
+  @IsOptional()
+  classification?: TransactionClassification;
+
+  @IsBoolean()
+  @IsOptional()
+  isRecurring?: boolean;
 
   @IsNumber()
   amount: number;
@@ -42,4 +55,30 @@ export class CreateTransactionDto {
   @IsOptional()
   @MaxLength(3)
   currencyCode?: string;
+
+  // Fuel specific fields
+  @IsUUID()
+  @IsOptional()
+  vehicleId?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(100)
+  station?: string;
+
+  @IsEnum(FuelType)
+  @IsOptional()
+  fuelType?: FuelType;
+
+  @IsNumber()
+  @IsOptional()
+  currentKm?: number;
+
+  @IsNumber()
+  @IsOptional()
+  liters?: number;
+
+  @IsNumber()
+  @IsOptional()
+  pricePerLiter?: number;
 }

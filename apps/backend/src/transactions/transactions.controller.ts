@@ -7,9 +7,11 @@ import {
   Delete,
   Query,
   UseGuards,
+  Patch,
 } from '@nestjs/common';
 import { TransactionsService } from './transactions.service';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
+import { UpdateTransactionDto } from './dto/update-transaction.dto';
 import { ListTransactionsQuery } from './dto/list-transactions.query';
 import { Transaction, User } from '@project-budget/database';
 import { WorkOsAuthGuard } from '../auth/auth.guard';
@@ -42,6 +44,15 @@ export class TransactionsController {
     @Body() dto: CreateTransactionDto,
   ): Promise<Transaction> {
     return this.transactionsService.create(user.id, dto);
+  }
+
+  @Patch(':id')
+  update(
+    @Param('id') id: string,
+    @CurrentUser() user: User,
+    @Body() dto: UpdateTransactionDto,
+  ): Promise<Transaction> {
+    return this.transactionsService.update(id, user.id, dto);
   }
 
   @Delete(':id')

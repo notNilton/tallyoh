@@ -1,13 +1,5 @@
 import { Link } from '@tanstack/react-router';
-import {
-  CircleDollarSign,
-  Eye,
-  EyeOff,
-  MoreHorizontal,
-  LayoutGrid,
-  Activity,
-  Zap,
-} from 'lucide-react';
+import { CircleDollarSign, Eye, EyeOff, Settings, LayoutGrid, Activity, Zap } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
 import { usePrivacy } from '../lib/privacy';
 
@@ -67,11 +59,11 @@ export default function Header() {
             {privacyMode ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
           </button>
           <Link
-            to="/more"
+            to="/settings"
             className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-accent transition-smooth"
-            title="Mais"
+            title="Configurações"
           >
-            <MoreHorizontal className="w-5 h-5" />
+            <Settings className="w-5 h-5" />
           </Link>
           <ThemeToggle />
         </div>

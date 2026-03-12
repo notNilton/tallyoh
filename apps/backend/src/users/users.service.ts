@@ -33,6 +33,14 @@ export class UsersService {
     });
   }
 
+  async update(id: string, data: Partial<User>): Promise<User> {
+    await this.findOne(id);
+    return this.db.user.update({
+      where: { id },
+      data,
+    });
+  }
+
   async remove(id: string): Promise<User> {
     await this.findOne(id);
     return this.db.user.delete({ where: { id } });

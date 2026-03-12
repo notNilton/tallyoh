@@ -1,44 +1,97 @@
-# Análise de Implementação do Backend (Integração com Webapp)
+# Backend Implementation Guide
 
-Com base nas recentes alterações do frontend (`apps/webapp`) para as telas de Contas, Metas (Goals) e Veículos (Fleet), foi identificada a necessidade de evoluir o backend (`apps/backend`) para suportar as operações solicitadas pelas novas interfaces visuais.
+Este documento detalha as rotas de API e estruturas de dados necessárias no backend para suportar as funcionalidades implementadas no frontend (`webapp`).
 
-## 1. Módulo Accounts e Patrimônio Líquido
+## 1. Módulo de Transações
 
-A tela `accounts.tsx` introduziu um resumo rico de contas agrupadas (Corrente, Investimento, Cartão) e um bloco de "Net Worth Summary". O atual controller (`AccountsController`) fornece apenas o CRUD básico.
+### Listagem de Transações
 
-**O que precisa ser implementado:**
+**Rota:** `GET /transactions`
+**Parâmetros de Query:**
 
-- **Endpoint Analítico (`GET /accounts/summary` ou `GET /dashboard/net-worth`)**:
-  - Realizar o cálculo do **Patrimônio Líquido** (Net Worth).
-  - Retornar detalhadamente o **Total Ativos** (soma de saldos positivos e investimentos) e o **Total Passivos** (soma de faturas em aberto e saldos devedores).
-- **Lógica de Cartões / Faturas (`CreditCardStatement`)**:
-  - Implementar todo o core de cartões. O frontend já exibe o balanço negativo e limites dos cartões. O backend precisa ler do model `CreditCardStatement` já existente no banco e associar transações de tipo "despesa" à fatura em aberto corretamente (baseado no dia de fechamento).
+- `search` (string): Busca no campo de descrição.
+- `type` (enum: `income`, `expense`): Filtro por tipo.
+- `cat` (string): Filtro por categoria.
+- `startDate` (ISO Date): Início do período.
+- `endDate` (ISO Date): Fim do período.
 
-## 2. Módulo de Veículos (Fleet Management)
+**Resposta Esperada:**
 
-A tela `vehicles.tsx` possui um dashboard focado no acompanhamento macro de cada veículo, o que ultrapassa o atual foco puramente no abastecimento (`RefuelingLog`).
+```json
+[
+  {
+    "id": "uuid",
+    "date": "2026-03-12",
+    "desc": "Supermercado Silva",
+    "cat": "Alimentação",
+    "account": "Nubank",
+    "val": -184.5,
+    "type": "expense",
+    "isRecurring": false
+  }
+]
+```
 
-**O que precisa ser implementado:**
+### Criar/Editar Transação
 
-- **Atualização do Schema de Banco de Dados**:
-  - O schema atual foca apenas em abastecimentos (`RefuelingLog`). O frontend necessita mapear manutenções, trocas de óleo e despesas do tipo alerta (IPVA), exibidos como `MaintenanceItem` (com tipos `fuel`, `service`, `alert`). É imperativo criar um model `VehicleMaintenanceLog` no Prisma, ou refatorar o `RefuelingLog` para suportar as manutenções e despesas genéricas de frota apontando para uma `Transaction` base.
-- **Endpoint Analítico (`GET /vehicles/:id/dashboard`)**:
-  - Fornecer o **Odômetro Total** atual.
-  - Calcular o **Custo Médio / Mês** do veículo, agregando as transações vinculadas e dividindo pelo período de histórico.
-  - Retornar o timeline de últimos lançamentos unificado e a prévia da **Revisão Agendada**.
+**Rota:** `POST /transactions` | `PUT /transactions/:id`
+**Campos Base:**
 
-## 3. Módulo de Metas Financeiras (Goals)
+- `type` (enum: `common`, `fuel`)
+- `isExpense` (boolean)
+- `description` (string)
+- `value` (decimal)
+- `date` (date)
+- `categoryId` (uuid)
+- `accountId` (uuid)
+- `isRecurring` (boolean)
+- `notes` (text)
+- `attachments` (multipart/form-data - placeholder)
 
-A tela `goals.tsx` exige cálculos comparativos (status da meta) e um totalizador macro que envolve todo o portfólio de metas do usuário.
+**Campos Específicos para `type: fuel`:**
 
-**O que precisa ser implementado:**
-
-- **Endpoint Analítico (`GET /goals/summary`)**:
-  - Total Acumulado em Metas (soma de todos os `currentAmount`).
-  - Representatividade total (Percentual ou fatia comparada ao patrimônio líquido total do usuário).
-- **Endpoint de Progresso (`POST /goals/:id/deposit` e `POST /goals/:id/withdraw`)**:
-  - A interface gráfica sugere movimentar o dinheiro das metas. O backend deve receber esse input e atualizar não somente o campo numérico, mas potencialmente gerar a `Transaction` correspondente associando o `goalId` (conforme especificado no Prisma) para garantir rastreabilidade contábil.
+- `vehicleId` (uuid)
+- `station` (string)
+- `fuelType` (enum: `Gasolina`, `Etanol`, etc)
+- `currentKm` (integer)
+- `liters` (decimal)
 
 ---
 
-**Conclusão**: O backend provisionou corretamente os recuros básicos de CRUDs no NestJS, mas falta a camada analítica de dados (`Aggregations`) e os serviços orquestradores que mesclam recursos transacionais (ex: registrar avanço numa meta enquanto cria uma transação no ledger) para suportar a rica e densa experiência da interface gráfica desenvolvida.
+## 2. Módulo de Veículos (Evolução)
+
+### Estatísticas de Performance
+
+**Rota:** `GET /vehicles/:id/stats`
+**Campos no JSON:**
+
+- `avgConsumption`: km/L médio.
+- `avgCost`: Custo médio por abastecimento.
+- `autonomy`: KM estimado com tanque atual.
+
+### Histórico de Abastecimento
+
+**Rota:** `GET /vehicles/:id/fuel-history`
+**Filtro sugerido:** Últimos 6 meses por padrão.
+
+---
+
+## 3. Configurações e Perfil
+
+### Perfil do Usuário
+
+- `GET /user/me`: Retorna nome, email e URL do avatar.
+- `PATCH /user/me`: Atualiza nome e email.
+- `POST /user/avatar`: Upload de nova foto de perfil.
+
+### Segurança e Dados
+
+- `POST /user/change-password`: Payload `{ currentPassword, newPassword }`.
+- `PATCH /user/preferences`: Payload `{ privacyModeEnabled: boolean }`.
+- `DELETE /user/purge`: Apaga todos os dados do usuário (LGPD/GDPR compliance).
+
+## Próximos Passos (Backend)
+
+1. Definir Schema do Prisma (ou DB de escolha).
+2. Implementar Middlewares de Autenticação (JWT sugerido).
+3. Criar Controllers para cada entidade acima.

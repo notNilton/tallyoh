@@ -62,4 +62,9 @@ export class VehiclesController {
   ): Promise<RefuelingLog[]> {
     return this.vehiclesService.getRefuelings(id, user.id);
   }
+
+  @Get(':id/stats')
+  getStats(@Param('id') id: string, @CurrentUser() user: User) {
+    return this.vehiclesService.getStats(id, user.id);
+  }
 }
