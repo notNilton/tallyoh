@@ -1,95 +1,51 @@
 # TODO: Project Budget - Status de Implementação
 
-Com base nos documentos de design detalhados em `docs/designs/PROJECT_DESIGN.md` e `DATABASE_DESIGN.md`, bem como no estado atual da base de código (`apps/backend` e `apps/webapp`), aqui está o status macro das implementações e as próximas tarefas (TODOs) do projeto.
+Com base nos documentos de design detalhados e no estado atual da base de código (`apps/backend` e `apps/webapp`), aqui está o status macro das implementações e as próximas tarefas (TODOs) do projeto.
 
 ---
 
-## ✅ FASE 0: Fundação e Infraestrutura (Pré-MVP)
+## ✅ FASE 0: Fundação e Infraestrutura (Concluído)
 
-A infraestrutura e estrutura base do monorepo estão estabelecidas.
+A infraestrutura e estrutura base do monorepo foram estabelecidas com sucesso.
 
 - [x] **Backend (NestJS)**: Estrutura inicial e módulos core configurados (`app.module.ts`).
-- [x] **Webapp (TanStack Start + React)**: Rotas básicas e setup inicial implementados (`router.tsx`, `index.tsx`).
-- [x] **Banco de Dados (Prisma + PostgreSQL)**: Módulo de banco (`database`) presente.
+- [x] **Webapp (TanStack Start + Vite)**: Setup inicial extremamente otimizado com rotas baseadas em arquivos e UI Premium.
+- [x] **Banco de Dados (Prisma + PostgreSQL)**: Módulo de banco (`database`) presente e configurado.
 - [x] **Autenticação & Segurança (WorkOS)**: Módulos de `auth` e `users` implementados no backend.
 
 ---
 
-## 🚀 FASE 1: MVP Essencial (Mês 1-3)
+## 🚀 FASE 1: MVP Essencial & UI Premium (Concluído)
 
-A maioria dos serviços de backend e telas do frontend já foram provisionados para o MVP.
+O webapp foi simplificado e tornado mais prático, com todas as funcionalidades essenciais de interface prontas.
 
-- [x] **Gestão Básica de Contas**: Módulo `accounts` (Backend) e tela `accounts.tsx` (Webapp).
-- [x] **Motor de Lançamentos**: Módulo `transactions` (Backend) e tela `transactions.tsx` (Webapp).
-- [x] **Categorização**: Módulo `categories` (Backend) criado.
-- [x] **Importação de Dados (OFX/CSV)**: Rota de importação (`import.tsx`) presente no webapp.
-- [x] **Dashboards Básicos**: Rota raiz (`index.tsx`) provisionada.
-- [x] **Orçamentos Básicos (Budget)**: Módulo `budgets` (Backend) e tela `budgets.tsx` (Webapp).
-- [x] **Quick Add (Mobile)**: Otimização ou UI focada em mobile ainda precisa ser verificada/refinada.
-- [x] **Modo Oculto (Privacy Mode)**: Verificar suporte na UI.
-- [x] **Filtros e Relatórios no Extrato**: Validar se a busca/filtros estão ativos.
+- [x] **Gestão de Contas**: Módulo `accounts` (Backend) e tela `accounts.tsx` funcional no Webapp.
+- [x] **Motor de Lançamentos**: Módulo `transactions` (Backend) e tela `transactions.tsx` completa com filtros avançados.
+- [x] **Categorização**: Módulo `categories` (Backend) criado e suporte na UI.
+- [x] **Importação de Dados (OFX/CSV)**: Fluxo de importação (`import.tsx`) implementado.
+- [x] **Dashboards**: Rota raiz (`index.tsx`) com resumo financeiro completo (Net Worth, Safe-to-Spend).
+- [x] **Quick Add**: Modal de transação rápido e FAB funcional em todas as telas.
+- [x] **Modo Oculto (Privacy Mode)**: Suporte global via componente `PrivacyAmount`.
 
 ---
 
-## ✨ FASE 2: Experiência Completa & Colaboração (Mês 4-6)
+## ✨ FASE 2: Experiência Completa & Evolução (Em Produção)
 
-Alguns recursos de backend já se adiantaram (ex: Veículos e Metas), mas requerem integração no Frontend.
+A fase de evolução foi integrada em uma interface centralizada e prática, facilitando o acompanhamento de metas e veículos.
 
-- [x] **Gestão de Metas (Goals)**: Módulo `goals` provisionado no Backend. (Falta Frontend).
-- [x] **Gestão de Veículos (Fleet Module)**: Módulo `vehicles` provisionado no Backend. (Falta Frontend).
-- [ ] **Telas de Metas e Veículos no Webapp**: Criar rotas e interfaces (`goals.tsx` e `vehicles.tsx`).
-- [ ] **Cartões de Crédito Inteligentes**: Calcular melhor data/fatura. Falta implementação da lógica de conciliação.
-- [ ] **Recorrência Avançada & Parcelamentos**: Implementar desdobramento de faturas.
-- [ ] **Orçamentos Elásticos (Envelope Budgeting)**: Evoluir módulo atual de budgets.
-- [ ] **Central de Dashboards Avançada**: Gráficos MoM, Net Worth, Sankey.
-- [ ] **Calendário Financeiro / Notificações**.
-- [ ] **Colaboração Familiar (Contas Compartilhadas)** e **Split (Divisão)**.
-- [ ] **Gamificação Básica (Score e Badges)**.
-- [ ] **App Mobile (Offline-first)**: Iniciativa futura (React Native/Expo).
-- [ ] **Exportação para Imposto de Renda e PDF**.
+- [x] **Evolução Financeira**: Tela `evolution.tsx` consolidando Orçamentos, Metas e Combustível.
+- [x] **Gestão de Metas (Goals)**: Interface de acompanhamento de sonhos e reserva de emergência concluída.
+- [x] **Módulo de Veículos (Fleet)**: Gestão de abastecimentos e eficiência integrada na aba de Evolução.
+- [x] **Orçamentos Avançados**: Visualização de limites por categoria e insights de gasto.
+- [ ] **Integração Real (Backend)**: Conectar todos os mocks da UI aos serviços reais do NestJS.
+- [ ] **Cartões de Crédito Inteligentes**: Implementar lógica de faturas e conciliação.
+- [ ] **Recorrência & Parcelamentos**: Implementar desdobramento automático no backend.
 
 ---
 
-## 🧠 FASE 3: Inteligência Artificial e Predição (Mês 7-12)
+## 💰 FASE 4: Recursos Avançados (Planejado)
 
-_(Nenhum item iniciado)_
-
-- [ ] **IA de Categorização Semântica**.
-- [ ] **Previsão de Saldo (Cashflow Forecasting)**.
-- [ ] **Detecção de Anomalias**.
-- [ ] **Chatbot Consultivo**.
-- [ ] **Integração Open Finance**.
-- [ ] **Micro-classificação Avançada (Tags & Projetos)**.
-- [ ] **Upload e OCR de Comprovantes**.
+- [ ] **Colaboração Familiar**: Contas compartilhadas e divisão de gastos (Split).
+- [ ] **Calendário Financeiro**: Notificações e visão mensal de vencimentos.
 
 ---
-
-## 💰 FASE 4: Marketplace e Open Finance Ativo (Ano 2)
-
-_(Nenhum item iniciado)_
-
-- [ ] **Comparador de Investimentos**.
-- [ ] **Otimização de Crédito / Renegociação**.
-- [ ] **Recuperação de Cashback e Taxas**.
-- [ ] **Multimoedas e Conversão Estimativa**.
-- [ ] **Tracking de Ativos Variáveis (Cripto/Ações)**.
-- [ ] **Planos Premium (Monetização)**.
-
----
-
-## 🌐 FASE 5: B2B2C e Educação (Ano 2)
-
-_(Nenhum item iniciado)_
-
-- [ ] **White Label para Empresas**.
-- [ ] **Módulo Kids/Teen (Contas Dependentes)**.
-- [ ] **Trilhas de Aprendizado Gamificadas**.
-- [ ] **APIs Públicas e Ecossistema B2B2C**.
-
----
-
-## 📌 Próximos Passos (Curto Prazo)
-
-1. **Frontend**: Desenvolver as páginas/telas listadas em Phase 2 que já possuem suporte no Backend (ex: Metas e Veículos).
-2. **Integração**: Conectar o Frontend ao Backend nos fluxos de autenticação, accounts e transactions, garantindo que o básico (CRUD) esteja liso.
-3. **Cartões de Crédito**: Implementar a lógica de faturas (`CreditCardStatement`) em cima do módulo `accounts` atual.
