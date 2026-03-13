@@ -3,7 +3,7 @@ import { DatabaseService } from '../database/database.service';
 import { CreateVehicleDto } from './dto/create-vehicle.dto';
 import { UpdateVehicleDto } from './dto/update-vehicle.dto';
 import { CreateRefuelingLogDto } from './dto/create-refueling-log.dto';
-import { Vehicle, RefuelingLog } from '@project-budget/database';
+import { Vehicle, RefuelingLog, Prisma } from '@project-budget/database';
 
 @Injectable()
 export class VehiclesService {
@@ -31,6 +31,7 @@ export class VehiclesService {
     return this.database.vehicle.create({
       data: {
         ...dto,
+        tank: dto.tank ? new Prisma.Decimal(dto.tank) : undefined,
         userId,
       },
     });
@@ -45,7 +46,10 @@ export class VehiclesService {
 
     return this.database.vehicle.update({
       where: { id },
-      data: dto,
+      data: {
+        ...dto,
+        tank: dto.tank ? new Prisma.Decimal(dto.tank) : undefined,
+      },
     });
   }
 
@@ -79,19 +83,25 @@ export class VehiclesService {
     await this.findOne(vehicleId, userId);
 
     return this.database.refuelingLog.findMany({
-      where: { vehicleId },
+      where: {
+        vehicleId,
+        transaction: { isActive: true },
+      },
       include: { transaction: true },
-      orderBy: { createdAt: 'desc' },
+      orderBy: [{ transaction: { date: 'desc' } }, { odometer: 'desc' }],
     });
   }
 
   async getStats(vehicleId: string, userId: string) {
-    await this.findOne(vehicleId, userId);
+    const vehicle = await this.findOne(vehicleId, userId);
 
     const logs = await this.database.refuelingLog.findMany({
-      where: { vehicleId },
-      orderBy: { odometer: 'desc' },
-      take: 4, // Need 4 logs to get 3 consumption intervals
+      where: {
+        vehicleId,
+        transaction: { isActive: true },
+      },
+      orderBy: [{ transaction: { date: 'desc' } }, { odometer: 'desc' }],
+      take: 10,
       include: { transaction: true },
     });
 
@@ -99,6 +109,7 @@ export class VehiclesService {
       return {
         avgConsumption: 0,
         avgCost: 0,
+        avgPricePerLiter: 0,
         autonomy: 0,
       };
     }
@@ -115,18 +126,23 @@ export class VehiclesService {
     }
     const avgConsumption = totalLiters > 0 ? totalKm / totalLiters : 0;
 
-    // Average Cost
-    const last3Logs = logs.slice(0, 3);
+    // Average Cost (per refueling)
     const avgCost =
-      last3Logs.reduce((acc, log) => acc + Number(log.transaction.amount), 0) /
-      last3Logs.length;
+      logs.reduce((acc, log) => acc + Number(log.transaction.amount), 0) /
+      logs.length;
 
-    // Autonomy (Estimated with 50L tank if not specified, placeholder logic)
-    const autonomy = avgConsumption * 50;
+    // Average Price per Liter
+    const avgPricePerLiter =
+      logs.reduce((acc, log) => acc + Number(log.pricePerLiter), 0) /
+      logs.length;
+
+    // Autonomy (Estimated based on vehicle tank capacity)
+    const autonomy = avgConsumption * Number(vehicle.tank || 50);
 
     return {
       avgConsumption: parseFloat(avgConsumption.toFixed(2)),
       avgCost: parseFloat(avgCost.toFixed(2)),
+      avgPricePerLiter: parseFloat(avgPricePerLiter.toFixed(2)),
       autonomy: Math.round(autonomy),
     };
   }

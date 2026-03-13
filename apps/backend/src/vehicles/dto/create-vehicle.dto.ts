@@ -3,6 +3,7 @@ import {
   IsOptional,
   IsString,
   IsInt,
+  IsNumber,
   MaxLength,
 } from 'class-validator';
 
@@ -30,4 +31,8 @@ export class CreateVehicleDto {
   @IsInt()
   @IsOptional()
   year?: number;
+
+  @IsNumber()
+  @IsOptional()
+  tank?: number;
 }
