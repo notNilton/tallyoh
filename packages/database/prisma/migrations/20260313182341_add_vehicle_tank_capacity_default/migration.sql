@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "vehicles" ADD COLUMN     "tank" DECIMAL(10,2) NOT NULL DEFAULT 50.00;

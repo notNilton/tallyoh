@@ -362,6 +362,7 @@ model Vehicle {
     make         String? @db.VarChar(50)
     model        String? @db.VarChar(50)
     year         Int?
+    tank         Decimal @default(50.00) @map("tank") @db.Decimal(10, 2)
 
     isActive  Boolean   @default(true) @map("is_active")
     deletedAt DateTime? @map("deleted_at")
