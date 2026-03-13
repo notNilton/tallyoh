@@ -6,7 +6,7 @@
     "#/*": "./src/*"
   },
   "scripts": {
-    "dev": "vite dev --port 3000",
+    "dev": "vite dev --port 3400",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",

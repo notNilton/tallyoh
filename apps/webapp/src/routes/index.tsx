@@ -1,5 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
+import { useState, useEffect } from 'react';
 import PrivacyAmount from '../components/PrivacyAmount';
+import { auth } from '../lib/auth';
 import {
   Plus,
   ArrowUpCircle,
@@ -11,13 +13,43 @@ import {
   ShieldCheck,
   ChevronRight,
   Wallet,
-  Building,
+  Loader2,
   type LucideIcon,
 } from 'lucide-react';
 
 export const Route = createFileRoute('/')({
   component: UserDashboard,
 });
+
+interface DashboardData {
+  userName: string;
+  totalBalance: number;
+  monthlyIncome: number;
+  monthlyExpenses: number;
+  safeToSpend: number;
+  accounts: Array<{
+    label: string;
+    val: number;
+    color: string;
+    icon: string;
+  }>;
+  recentTransactions: Array<{
+    label: string;
+    cat: string;
+    val: number;
+    date: string;
+    icon: string;
+  }>;
+  budgets: Array<{
+    label: string;
+    spent: number;
+    limit: number;
+  }>;
+  cashFlow: Array<{
+    day: string;
+    value: number;
+  }>;
+}
 
 function MetricCard({
   title,
@@ -44,19 +76,58 @@ function MetricCard({
         <h3 className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
           {title}
         </h3>
-        <p className="text-2xl font-bold font-display mt-1">{value}</p>
+        <div className="text-2xl font-bold font-display mt-1">{value}</div>
       </div>
     </div>
   );
 }
 
 function UserDashboard() {
+  const [data, setData] = useState<DashboardData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchDashboard = async () => {
+      try {
+        const response = await fetch('http://localhost:3500/dashboard', {
+          headers: {
+            Authorization: `Bearer ${auth.getToken()}`,
+          },
+        });
+        if (!response.ok) throw new Error('Falha ao carregar dashboard');
+        const result = await response.json();
+        setData(result);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchDashboard();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <p className="text-muted-foreground font-medium animate-pulse">
+          Carregando seu panorama...
+        </p>
+      </div>
+    );
+  }
+
+  if (!data) return null;
+
+  const currentMonth = new Date().toLocaleString('pt-BR', { month: 'short' }).replace('.', '');
+
   return (
     <div className="p-8 max-w-7xl mx-auto flex flex-col gap-8">
       {/* Welcome & Quick Action */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-display font-bold">Olá, Nilton</h1>
+          <h1 className="text-3xl font-display font-bold">Olá, {data.userName}</h1>
           <p className="text-muted-foreground mt-1">Aqui está o resumo das suas finanças hoje.</p>
         </div>
         <button className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary text-primary-foreground font-semibold shadow-lg shadow-primary/20 hover:scale-[1.02] transition-smooth">
@@ -69,25 +140,25 @@ function UserDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <MetricCard
           title="Saldo Total"
-          value={<PrivacyAmount value={12450} className="font-display" />}
-          detail="Em 4 contas"
+          value={<PrivacyAmount value={data.totalBalance} className="font-display" />}
+          detail={`Em ${data.accounts.length} contas`}
           icon={CreditCard}
         />
         <MetricCard
-          title="Receitas (Mar)"
-          value={<PrivacyAmount value={8200} className="font-display" />}
-          detail="+R$ 1.200 vs Fev"
+          title={`Receitas (${currentMonth})`}
+          value={<PrivacyAmount value={data.monthlyIncome} className="font-display" />}
+          detail="Este mês"
           icon={ArrowUpCircle}
         />
         <MetricCard
-          title="Despesas (Mar)"
-          value={<PrivacyAmount value={3840.5} className="font-display" />}
-          detail="46% do planejado"
+          title={`Despesas (${currentMonth})`}
+          value={<PrivacyAmount value={data.monthlyExpenses} className="font-display" />}
+          detail="Planejado vs Real"
           icon={ArrowDownCircle}
         />
         <MetricCard
           title="Pode Gastar"
-          value={<PrivacyAmount value={2150} className="font-display" />}
+          value={<PrivacyAmount value={data.safeToSpend} className="font-display" />}
           detail="Safe-to-Spend"
           icon={ShieldCheck}
         />
@@ -101,27 +172,27 @@ function UserDashboard() {
             <div className="flex items-center justify-between mb-8">
               <h2 className="text-sm font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
                 <TrendingUp className="w-4 h-4" />
-                Fluxo de Caixa
+                Fluxo de Caixa (7 dias)
               </h2>
-              <select className="bg-muted text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded border-none focus:ring-0 cursor-pointer">
-                <option>7 dias</option>
-                <option>30 dias</option>
-              </select>
             </div>
             <div className="h-[250px] flex items-end gap-3 px-2">
-              {[30, 45, 25, 60, 80, 55, 90].map((h, i) => (
-                <div key={i} className="flex-1 flex flex-col gap-1 items-center group">
-                  <div className="w-full bg-muted/30 group-hover:bg-muted/50 rounded-t h-[180px] flex flex-col justify-end overflow-hidden">
-                    <div
-                      className="w-full bg-primary/40 group-hover:bg-primary/60 transition-smooth"
-                      style={{ height: `${h}%` }}
-                    />
+              {data.cashFlow.map((day, i) => {
+                const maxValue = Math.max(...data.cashFlow.map((d) => d.value), 1);
+                const height = (day.value / maxValue) * 100;
+                return (
+                  <div key={i} className="flex-1 flex flex-col gap-1 items-center group">
+                    <div className="w-full bg-muted/30 group-hover:bg-muted/50 rounded-t h-[180px] flex flex-col justify-end overflow-hidden">
+                      <div
+                        className="w-full bg-primary/40 group-hover:bg-primary/60 transition-smooth"
+                        style={{ height: `${height === 0 ? 5 : height}%` }}
+                      />
+                    </div>
+                    <span className="text-[10px] text-muted-foreground font-medium uppercase mt-2">
+                      {day.day}
+                    </span>
                   </div>
-                  <span className="text-[10px] text-muted-foreground font-medium uppercase mt-2">
-                    Seg
-                  </span>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 
@@ -138,36 +209,7 @@ function UserDashboard() {
               </button>
             </div>
             <div className="flex flex-col">
-              {[
-                {
-                  label: 'Supermercado Silva',
-                  cat: 'Alimentação',
-                  val: -184.5,
-                  date: 'Hoje',
-                  icon: '🛒',
-                },
-                {
-                  label: 'Salário Empresa X',
-                  cat: 'Renda',
-                  val: 5200.0,
-                  date: 'Ontem',
-                  icon: '💰',
-                },
-                {
-                  label: 'Netflix Streaming',
-                  cat: 'Lazer',
-                  val: -55.9,
-                  date: '02 Mar',
-                  icon: '🍿',
-                },
-                {
-                  label: 'Posto Shell',
-                  cat: 'Transporte',
-                  val: -220.0,
-                  date: '01 Mar',
-                  icon: '⛽',
-                },
-              ].map((t, i) => (
+              {data.recentTransactions.map((t, i) => (
                 <div
                   key={i}
                   className="flex items-center justify-between py-4 border-b border-border last:border-0 hover:bg-muted/30 px-2 -mx-2 rounded-lg transition-smooth cursor-pointer"
@@ -190,6 +232,11 @@ function UserDashboard() {
                   />
                 </div>
               ))}
+              {data.recentTransactions.length === 0 && (
+                <p className="text-center py-8 text-sm text-muted-foreground italic">
+                  Nenhuma transação encontrada.
+                </p>
+              )}
             </div>
           </div>
         </div>
@@ -205,11 +252,7 @@ function UserDashboard() {
               </h2>
             </div>
             <div className="flex flex-col gap-5">
-              {[
-                { label: 'Alimentação', spent: 850, limit: 1200 },
-                { label: 'Transporte', spent: 420, limit: 500 },
-                { label: 'Lazer', spent: 300, limit: 400 },
-              ].map((b) => (
+              {data.budgets.map((b) => (
                 <div key={b.label}>
                   <div className="flex justify-between text-[11px] font-bold uppercase tracking-wider mb-1.5">
                     <span>{b.label}</span>
@@ -220,11 +263,16 @@ function UserDashboard() {
                   <div className="h-1.5 bg-muted rounded-full overflow-hidden">
                     <div
                       className={`h-full bg-primary transition-smooth`}
-                      style={{ width: `${(b.spent / b.limit) * 100}%` }}
+                      style={{ width: `${Math.min((b.spent / b.limit) * 100, 100)}%` }}
                     />
                   </div>
                 </div>
               ))}
+              {data.budgets.length === 0 && (
+                <p className="text-center py-4 text-xs text-muted-foreground italic">
+                  Crie orçamentos para acompanhar seus gastos.
+                </p>
+              )}
             </div>
             <button className="w-full mt-6 py-2.5 rounded-lg border border-border text-[11px] font-bold uppercase tracking-widest hover:bg-muted transition-smooth">
               Gerenciar
@@ -243,40 +291,21 @@ function UserDashboard() {
               </button>
             </div>
             <div className="flex flex-col gap-3">
-              {[
-                {
-                  label: 'Nubank',
-                  val: 4250,
-                  icon: <Wallet className="w-4 h-4" />,
-                  color: 'bg-indigo-500/10 text-indigo-500',
-                },
-                {
-                  label: 'Itaú',
-                  val: 8200,
-                  icon: <Building className="w-4 h-4" />,
-                  color: 'bg-emerald-500/10 text-emerald-500',
-                },
-                {
-                  label: 'XP Investimentos',
-                  val: 15600,
-                  icon: <TrendingUp className="w-4 h-4" />,
-                  color: 'bg-amber-500/10 text-amber-500',
-                },
-              ].map((acc, i) => (
+              {data.accounts.map((acc, i) => (
                 <div
                   key={i}
                   className="flex items-center justify-between p-3 rounded-xl hover:bg-muted/50 transition-smooth group cursor-pointer border border-transparent hover:border-border"
                 >
                   <div className="flex items-center gap-3">
                     <div
-                      className={`w-9 h-9 rounded-lg flex items-center justify-center ${acc.color}`}
+                      className={`w-9 h-9 rounded-lg flex items-center justify-center bg-primary/10 text-primary`}
                     >
-                      {acc.icon}
+                      <Wallet className="w-4 h-4" />
                     </div>
                     <div>
                       <p className="text-sm font-bold">{acc.label}</p>
                       <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
-                        Principal
+                        {acc.icon || 'Principal'}
                       </p>
                     </div>
                   </div>
