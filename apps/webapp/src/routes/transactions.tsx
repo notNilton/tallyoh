@@ -46,6 +46,17 @@ interface Transaction {
   accountId?: string;
   category?: Category;
   account?: Account;
+  vehicleId?: string;
+  currentKm?: number;
+  liters?: number;
+  fuelType?: string;
+  refuelingLog?: {
+    vehicleId: string;
+    odometer: number;
+    fuelLiters: number;
+    fuelType: string;
+    pricePerLiter: number;
+  };
 }
 
 function TransactionsPage() {
@@ -358,6 +369,7 @@ function TransactionsPage() {
       </div>
 
       <TransactionModal
+        key={editingTransaction?.id ?? 'new'}
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSuccess={handleModalSuccess}

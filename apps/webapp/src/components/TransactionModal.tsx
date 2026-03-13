@@ -45,6 +45,13 @@ interface Transaction {
   liters?: number;
   pricePerLiter?: number;
   fuelType?: string;
+  refuelingLog?: {
+    vehicleId: string;
+    odometer: number;
+    fuelLiters: number;
+    fuelType: string;
+    pricePerLiter: number;
+  };
 }
 
 export function TransactionModal({
@@ -55,6 +62,8 @@ export function TransactionModal({
   initialData,
 }: TransactionModalProps) {
   const isEditing = mode === 'edit';
+  const fuelData = initialData?.refuelingLog;
+
   const [isExpense, setIsExpense] = useState(initialData ? initialData.type === 'EXPENSE' : true);
   const [isRecurring, setIsRecurring] = useState(initialData?.isRecurring ?? false);
   const [date, setDate] = useState(
@@ -68,19 +77,40 @@ export function TransactionModal({
   );
   const [notes, setNotes] = useState(initialData?.notes ?? '');
   const [categoryId, setCategoryId] = useState(initialData?.categoryId ?? '');
-  const [accountId, setAccountId] = useState(initialData?.accountId ?? '');
+  const [accountId, setAccountId] = useState(
+    initialData?.accountId ?? initialData?.account?.id ?? '',
+  );
 
   // Fuel specific state
   const [classification, setClassification] = useState(initialData?.classification ?? 'COMMON');
-  const [vehicleId, setVehicleId] = useState(initialData?.vehicleId ?? '');
-  const [currentKm, setCurrentKm] = useState(initialData?.currentKm?.toString() ?? '0');
-  const [liters, setLiters] = useState(
-    initialData?.liters ? Math.floor(initialData.liters * 1000).toString() : '0',
+  const [vehicleId, setVehicleId] = useState(fuelData?.vehicleId ?? initialData?.vehicleId ?? '');
+  const [currentKm, setCurrentKm] = useState(
+    fuelData?.odometer
+      ? Math.floor(Number(fuelData.odometer)).toString()
+      : initialData?.currentKm
+        ? Math.floor(Number(initialData.currentKm)).toString()
+        : '0',
   );
-  const [fuelType, setFuelType] = useState(initialData?.fuelType ?? 'GASOLINA_COMUM');
+  const [liters, setLiters] = useState(
+    fuelData?.fuelLiters
+      ? Math.floor(Number(fuelData.fuelLiters) * 1000).toString()
+      : initialData?.liters
+        ? Math.floor(Number(initialData.liters) * 1000).toString()
+        : '0',
+  );
+  const [fuelType, setFuelType] = useState(
+    fuelData?.fuelType ?? initialData?.fuelType ?? 'GASOLINA_COMUM',
+  );
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Still use useEffect to handle cleaning error but rely on key for resetting
+  useEffect(() => {
+    if (isOpen) {
+      setError(null);
+    }
+  }, [isOpen]);
 
   const { data: categories = [] } = useQuery({
     queryKey: ['categories'],
@@ -237,17 +267,19 @@ export function TransactionModal({
           </div>
 
           {isExpense && (
-            <div className="flex gap-2 p-1 bg-muted rounded-2xl">
+            <div
+              className={`flex gap-2 p-1 bg-muted rounded-2xl ${isEditing ? 'opacity-50 cursor-not-allowed' : ''}`}
+            >
               <button
                 type="button"
-                onClick={() => setClassification('COMMON')}
+                onClick={() => !isEditing && setClassification('COMMON')}
                 className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-smooth ${classification === 'COMMON' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:bg-muted-foreground/5'}`}
               >
                 Comum
               </button>
               <button
                 type="button"
-                onClick={() => setClassification('FUEL')}
+                onClick={() => !isEditing && setClassification('FUEL')}
                 className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-smooth ${classification === 'FUEL' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:bg-muted-foreground/5'}`}
               >
                 Abastecimento

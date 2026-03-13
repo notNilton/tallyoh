@@ -133,14 +133,55 @@ export class TransactionsService {
     userId: string,
     dto: UpdateTransactionDto,
   ): Promise<Transaction> {
+    const {
+      accountId,
+      categoryId,
+      vehicleId,
+      fuelType,
+      currentKm,
+      liters,
+      pricePerLiter,
+      station,
+      classification,
+      amount,
+      date,
+      ...rest
+    } = dto;
+
     await this.findOne(id, userId);
 
     return this.db.transaction.update({
       where: { id },
       data: {
-        ...dto,
-        amount: dto.amount ? new Prisma.Decimal(dto.amount) : undefined,
-        date: dto.date ? new Date(dto.date) : undefined,
+        ...rest,
+        classification,
+        amount: amount ? new Prisma.Decimal(amount) : undefined,
+        date: date ? new Date(date) : undefined,
+        account: accountId ? { connect: { id: accountId } } : undefined,
+        category: categoryId ? { connect: { id: categoryId } } : undefined,
+        ...(classification === 'FUEL' &&
+          vehicleId && {
+            refuelingLog: {
+              upsert: {
+                create: {
+                  vehicleId,
+                  station,
+                  fuelType,
+                  odometer: new Prisma.Decimal(currentKm ?? 0),
+                  fuelLiters: new Prisma.Decimal(liters ?? 0),
+                  pricePerLiter: new Prisma.Decimal(pricePerLiter ?? 0),
+                },
+                update: {
+                  vehicleId,
+                  station,
+                  fuelType,
+                  odometer: new Prisma.Decimal(currentKm ?? 0),
+                  fuelLiters: new Prisma.Decimal(liters ?? 0),
+                  pricePerLiter: new Prisma.Decimal(pricePerLiter ?? 0),
+                },
+              },
+            },
+          }),
       },
       include: { category: true, tags: true, refuelingLog: true },
     });
