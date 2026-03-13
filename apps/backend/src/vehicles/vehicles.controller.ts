@@ -12,10 +12,10 @@ import { VehiclesService } from './vehicles.service';
 import { CreateVehicleDto } from './dto/create-vehicle.dto';
 import { UpdateVehicleDto } from './dto/update-vehicle.dto';
 import { Vehicle, User, RefuelingLog } from '@project-budget/database';
-import { WorkOsAuthGuard } from '../auth/auth.guard';
+import { JwtAuthGuard } from '../auth/auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
 
-@UseGuards(WorkOsAuthGuard)
+@UseGuards(JwtAuthGuard)
 @Controller('vehicles')
 export class VehiclesController {
   constructor(private readonly vehiclesService: VehiclesService) {}

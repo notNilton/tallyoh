@@ -14,10 +14,10 @@ import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { UpdateTransactionDto } from './dto/update-transaction.dto';
 import { ListTransactionsQuery } from './dto/list-transactions.query';
 import { Transaction, User } from '@project-budget/database';
-import { WorkOsAuthGuard } from '../auth/auth.guard';
+import { JwtAuthGuard } from '../auth/auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
 
-@UseGuards(WorkOsAuthGuard)
+@UseGuards(JwtAuthGuard)
 @Controller('transactions')
 export class TransactionsController {
   constructor(private readonly transactionsService: TransactionsService) {}

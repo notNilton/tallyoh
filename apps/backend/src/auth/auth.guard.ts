@@ -3,24 +3,17 @@ import {
   ExecutionContext,
   Injectable,
   UnauthorizedException,
-  ForbiddenException,
 } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
-import { createRemoteJWKSet, jwtVerify } from 'jose';
 import { DatabaseService } from '../database/database.service';
 
 @Injectable()
-export class WorkOsAuthGuard implements CanActivate {
-  private readonly jwksUrl: URL;
-
-  constructor(private readonly db: DatabaseService) {
-    const clientId = process.env.WORKOS_CLIENT_ID || '';
-    if (!clientId) {
-      console.warn('WORKOS_CLIENT_ID is not set!');
-    }
-    // O endpoint JWKS da WorkOS tem esse formato genérico:
-    this.jwksUrl = new URL(`https://api.workos.com/sso/jwks/${clientId}`);
-  }
+export class JwtAuthGuard implements CanActivate {
+  constructor(
+    private readonly jwtService: JwtService,
+    private readonly db: DatabaseService,
+  ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
@@ -30,28 +23,25 @@ export class WorkOsAuthGuard implements CanActivate {
       throw new UnauthorizedException('Token não fornecido.');
     }
 
-    let payload;
     try {
-      const JWKS = createRemoteJWKSet(this.jwksUrl);
-      const result = await jwtVerify(token, JWKS);
-      payload = result.payload;
+      const payload = await this.jwtService.verifyAsync(token, {
+        secret: process.env.JWT_SECRET || 'secretKey',
+      });
+
+      // Traduz o ID do token (payload.sub) para o usuário na DB
+      const user = await this.db.user.findUnique({
+        where: { id: payload.sub },
+      });
+
+      if (!user) {
+        throw new UnauthorizedException('Usuário não encontrado.');
+      }
+
+      request.user = user;
     } catch {
-      // Falha na assinatura, expirado, ou clientId errado.
-      throw new UnauthorizedException('Token JWT inválido ou expirado.');
+      throw new UnauthorizedException('Token inválido ou expirado.');
     }
 
-    // Traduz o ID do WorkOS (payload.sub) para o ID interno da nossa DB
-    const user = await this.db.user.findUnique({
-      where: { workosId: payload.sub as string },
-    });
-
-    if (!user) {
-      throw new ForbiddenException(
-        'Usuário autenticado, mas não cadastrado na plataforma (via webhook ainda).',
-      );
-    }
-
-    request.user = user;
     return true;
   }
 

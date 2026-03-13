@@ -1,7 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
-import { User } from '@project-budget/database';
-import { UpsertUserDto } from './dto/upsert-user.dto';
+import { User, Prisma } from '@project-budget/database';
 
 @Injectable()
 export class UsersService {
@@ -17,20 +16,12 @@ export class UsersService {
     return user;
   }
 
-  async findByWorkosId(workosId: string): Promise<User | null> {
-    return this.db.user.findUnique({ where: { workosId } });
+  async findByEmail(email: string): Promise<User | null> {
+    return this.db.user.findUnique({ where: { email } });
   }
 
-  async upsertFromWorkos(dto: UpsertUserDto): Promise<User> {
-    return this.db.user.upsert({
-      where: { workosId: dto.workosId },
-      create: dto,
-      update: {
-        email: dto.email,
-        name: dto.name,
-        avatarUrl: dto.avatarUrl,
-      },
-    });
+  async create(data: Prisma.UserCreateInput): Promise<User> {
+    return this.db.user.create({ data });
   }
 
   async update(id: string, data: Partial<User>): Promise<User> {

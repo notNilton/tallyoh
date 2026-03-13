@@ -13,10 +13,10 @@ import { BudgetsService } from './budgets.service';
 import { CreateBudgetDto } from './dto/create-budget.dto';
 import { UpdateBudgetDto } from './dto/update-budget.dto';
 import { Budget, User } from '@project-budget/database';
-import { WorkOsAuthGuard } from '../auth/auth.guard';
+import { JwtAuthGuard } from '../auth/auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
 
-@UseGuards(WorkOsAuthGuard)
+@UseGuards(JwtAuthGuard)
 @Controller('budgets')
 export class BudgetsController {
   constructor(private readonly budgetsService: BudgetsService) {}

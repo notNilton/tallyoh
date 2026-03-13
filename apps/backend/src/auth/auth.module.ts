@@ -1,8 +1,21 @@
 import { Module } from '@nestjs/common';
-import { WorkOsAuthGuard } from './auth.guard';
+import { JwtModule } from '@nestjs/jwt';
+import { AuthService } from './auth.service';
+import { AuthController } from './auth.controller';
+import { UsersModule } from '../users/users.module';
+import { JwtAuthGuard } from './auth.guard';
 
 @Module({
-  providers: [WorkOsAuthGuard],
-  exports: [WorkOsAuthGuard],
+  imports: [
+    UsersModule,
+    JwtModule.register({
+      global: true,
+      secret: process.env.JWT_SECRET || 'secretKey',
+      signOptions: { expiresIn: '1d' },
+    }),
+  ],
+  controllers: [AuthController],
+  providers: [AuthService, JwtAuthGuard],
+  exports: [AuthService, JwtAuthGuard],
 })
 export class AuthModule {}

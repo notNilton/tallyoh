@@ -1,7 +1,6 @@
 import {
   Controller,
   Get,
-  Post,
   Body,
   Param,
   Delete,
@@ -10,9 +9,8 @@ import {
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { User } from '@project-budget/database';
-import { UpsertUserDto } from './dto/upsert-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { WorkOsAuthGuard } from '../auth/auth.guard';
+import { JwtAuthGuard } from '../auth/auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
 
 @Controller('users')
@@ -24,28 +22,18 @@ export class UsersController {
     return this.usersService.findAll();
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string): Promise<User> {
-    return this.usersService.findOne(id);
-  }
-
-  @Get('workos/:workosId')
-  findByWorkosId(@Param('workosId') workosId: string): Promise<User | null> {
-    return this.usersService.findByWorkosId(workosId);
-  }
-
-  @Post('upsert')
-  upsertFromWorkos(@Body() dto: UpsertUserDto): Promise<User> {
-    return this.usersService.upsertFromWorkos(dto);
-  }
-
-  @UseGuards(WorkOsAuthGuard)
+  @UseGuards(JwtAuthGuard)
   @Get('me')
   getMe(@CurrentUser() user: User): Promise<User> {
     return this.usersService.findOne(user.id);
   }
 
-  @UseGuards(WorkOsAuthGuard)
+  @Get(':id')
+  findOne(@Param('id') id: string): Promise<User> {
+    return this.usersService.findOne(id);
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Patch('me')
   updateMe(
     @CurrentUser() user: User,

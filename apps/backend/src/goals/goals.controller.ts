@@ -12,10 +12,10 @@ import { GoalsService } from './goals.service';
 import { CreateGoalDto } from './dto/create-goal.dto';
 import { UpdateGoalDto } from './dto/update-goal.dto';
 import { Goal, User } from '@project-budget/database';
-import { WorkOsAuthGuard } from '../auth/auth.guard';
+import { JwtAuthGuard } from '../auth/auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
 
-@UseGuards(WorkOsAuthGuard)
+@UseGuards(JwtAuthGuard)
 @Controller('goals')
 export class GoalsController {
   constructor(private readonly goalsService: GoalsService) {}
