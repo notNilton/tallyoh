@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { createFileRoute } from '@tanstack/react-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import PrivacyAmount from '../../components/PrivacyAmount';
+import PrivacyAmount from '../components/PrivacyAmount';
 import {
   Plus,
   Wallet,
@@ -16,10 +16,10 @@ import {
   Loader2,
   type LucideIcon,
 } from 'lucide-react';
-import { api } from '../../lib/api';
-import { AccountModal, type AccountModalTab } from '../../components/AccountModal';
+import { api } from '../lib/api';
+import { AccountModal, type AccountModalTab } from '../components/AccountModal';
 
-export const Route = createFileRoute('/settings/accounts')({
+export const Route = createFileRoute('/accounts')({
   component: AccountsPage,
 });
 

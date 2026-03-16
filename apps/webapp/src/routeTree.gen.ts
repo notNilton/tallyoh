@@ -18,13 +18,13 @@ import { Route as ImportRouteImport } from './routes/import'
 import { Route as GoalsRouteImport } from './routes/goals'
 import { Route as FuelRouteImport } from './routes/fuel'
 import { Route as BudgetsRouteImport } from './routes/budgets'
+import { Route as AccountsRouteImport } from './routes/accounts'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SettingsIndexRouteImport } from './routes/settings/index'
 import { Route as SettingsVehiclesRouteImport } from './routes/settings/vehicles'
 import { Route as SettingsPersonalInfoRouteImport } from './routes/settings/personal-info'
 import { Route as SettingsDataPrivacyRouteImport } from './routes/settings/data-privacy'
 import { Route as SettingsCategoriesRouteImport } from './routes/settings/categories'
-import { Route as SettingsAccountsRouteImport } from './routes/settings/accounts'
 
 const TransactionsRoute = TransactionsRouteImport.update({
   id: '/transactions',
@@ -71,6 +71,11 @@ const BudgetsRoute = BudgetsRouteImport.update({
   path: '/budgets',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AccountsRoute = AccountsRouteImport.update({
+  id: '/accounts',
+  path: '/accounts',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -101,14 +106,10 @@ const SettingsCategoriesRoute = SettingsCategoriesRouteImport.update({
   path: '/categories',
   getParentRoute: () => SettingsRoute,
 } as any)
-const SettingsAccountsRoute = SettingsAccountsRouteImport.update({
-  id: '/accounts',
-  path: '/accounts',
-  getParentRoute: () => SettingsRoute,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/accounts': typeof AccountsRoute
   '/budgets': typeof BudgetsRoute
   '/fuel': typeof FuelRoute
   '/goals': typeof GoalsRoute
@@ -118,7 +119,6 @@ export interface FileRoutesByFullPath {
   '/register': typeof RegisterRoute
   '/settings': typeof SettingsRouteWithChildren
   '/transactions': typeof TransactionsRoute
-  '/settings/accounts': typeof SettingsAccountsRoute
   '/settings/categories': typeof SettingsCategoriesRoute
   '/settings/data-privacy': typeof SettingsDataPrivacyRoute
   '/settings/personal-info': typeof SettingsPersonalInfoRoute
@@ -127,6 +127,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/accounts': typeof AccountsRoute
   '/budgets': typeof BudgetsRoute
   '/fuel': typeof FuelRoute
   '/goals': typeof GoalsRoute
@@ -135,7 +136,6 @@ export interface FileRoutesByTo {
   '/more': typeof MoreRoute
   '/register': typeof RegisterRoute
   '/transactions': typeof TransactionsRoute
-  '/settings/accounts': typeof SettingsAccountsRoute
   '/settings/categories': typeof SettingsCategoriesRoute
   '/settings/data-privacy': typeof SettingsDataPrivacyRoute
   '/settings/personal-info': typeof SettingsPersonalInfoRoute
@@ -145,6 +145,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/accounts': typeof AccountsRoute
   '/budgets': typeof BudgetsRoute
   '/fuel': typeof FuelRoute
   '/goals': typeof GoalsRoute
@@ -154,7 +155,6 @@ export interface FileRoutesById {
   '/register': typeof RegisterRoute
   '/settings': typeof SettingsRouteWithChildren
   '/transactions': typeof TransactionsRoute
-  '/settings/accounts': typeof SettingsAccountsRoute
   '/settings/categories': typeof SettingsCategoriesRoute
   '/settings/data-privacy': typeof SettingsDataPrivacyRoute
   '/settings/personal-info': typeof SettingsPersonalInfoRoute
@@ -165,6 +165,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/accounts'
     | '/budgets'
     | '/fuel'
     | '/goals'
@@ -174,7 +175,6 @@ export interface FileRouteTypes {
     | '/register'
     | '/settings'
     | '/transactions'
-    | '/settings/accounts'
     | '/settings/categories'
     | '/settings/data-privacy'
     | '/settings/personal-info'
@@ -183,6 +183,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/accounts'
     | '/budgets'
     | '/fuel'
     | '/goals'
@@ -191,7 +192,6 @@ export interface FileRouteTypes {
     | '/more'
     | '/register'
     | '/transactions'
-    | '/settings/accounts'
     | '/settings/categories'
     | '/settings/data-privacy'
     | '/settings/personal-info'
@@ -200,6 +200,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/accounts'
     | '/budgets'
     | '/fuel'
     | '/goals'
@@ -209,7 +210,6 @@ export interface FileRouteTypes {
     | '/register'
     | '/settings'
     | '/transactions'
-    | '/settings/accounts'
     | '/settings/categories'
     | '/settings/data-privacy'
     | '/settings/personal-info'
@@ -219,6 +219,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AccountsRoute: typeof AccountsRoute
   BudgetsRoute: typeof BudgetsRoute
   FuelRoute: typeof FuelRoute
   GoalsRoute: typeof GoalsRoute
@@ -295,6 +296,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BudgetsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/accounts': {
+      id: '/accounts'
+      path: '/accounts'
+      fullPath: '/accounts'
+      preLoaderRoute: typeof AccountsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -337,18 +345,10 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsCategoriesRouteImport
       parentRoute: typeof SettingsRoute
     }
-    '/settings/accounts': {
-      id: '/settings/accounts'
-      path: '/accounts'
-      fullPath: '/settings/accounts'
-      preLoaderRoute: typeof SettingsAccountsRouteImport
-      parentRoute: typeof SettingsRoute
-    }
   }
 }
 
 interface SettingsRouteChildren {
-  SettingsAccountsRoute: typeof SettingsAccountsRoute
   SettingsCategoriesRoute: typeof SettingsCategoriesRoute
   SettingsDataPrivacyRoute: typeof SettingsDataPrivacyRoute
   SettingsPersonalInfoRoute: typeof SettingsPersonalInfoRoute
@@ -357,7 +357,6 @@ interface SettingsRouteChildren {
 }
 
 const SettingsRouteChildren: SettingsRouteChildren = {
-  SettingsAccountsRoute: SettingsAccountsRoute,
   SettingsCategoriesRoute: SettingsCategoriesRoute,
   SettingsDataPrivacyRoute: SettingsDataPrivacyRoute,
   SettingsPersonalInfoRoute: SettingsPersonalInfoRoute,
@@ -371,6 +370,7 @@ const SettingsRouteWithChildren = SettingsRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AccountsRoute: AccountsRoute,
   BudgetsRoute: BudgetsRoute,
   FuelRoute: FuelRoute,
   GoalsRoute: GoalsRoute,

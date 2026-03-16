@@ -141,7 +141,7 @@ function SettingsPage() {
           />
           <SettingItem
             icon={Wallet}
-            to="/settings/accounts"
+            to="/accounts"
             title="Gerenciar Contas Bancárias"
             description="Gerencie seus saldos e instituições financeiras."
           />

@@ -8,6 +8,7 @@ import {
   LogOut,
   User,
   Fuel,
+  Wallet,
 } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
 import { usePrivacy } from '../lib/privacy';
@@ -66,6 +67,14 @@ export default function Header() {
             <Target className="w-4 h-4" />
             Metas
           </Link> */}
+          <Link
+            to="/accounts"
+            className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-bold text-muted-foreground hover:text-foreground hover:bg-accent transition-smooth"
+            activeProps={{ className: 'text-foreground bg-accent' }}
+          >
+            <Wallet className="w-4 h-4" />
+            Contas
+          </Link>
           <Link
             to="/fuel"
             className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-bold text-muted-foreground hover:text-foreground hover:bg-accent transition-smooth"

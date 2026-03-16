@@ -12,7 +12,6 @@ import {
   Calendar,
   Tag,
   CreditCard,
-  FileUp,
   Edit2,
   Trash2,
   Loader2,
@@ -128,10 +127,6 @@ function TransactionsPage() {
           <p className="text-muted-foreground mt-1">Histórico completo e importação de extratos.</p>
         </div>
         <div className="flex gap-3">
-          <button className="flex items-center gap-2 px-5 py-2.5 rounded-full border border-border font-semibold hover:bg-muted transition-smooth">
-            <FileUp className="w-4 h-4" />
-            Importar
-          </button>
           <button
             onClick={handleCreate}
             className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary text-primary-foreground font-semibold shadow-lg shadow-primary/20 hover:scale-[1.02] transition-smooth"
