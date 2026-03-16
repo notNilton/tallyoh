@@ -3,7 +3,13 @@ import { DatabaseService } from '../database/database.service';
 import { CreateVehicleDto } from './dto/create-vehicle.dto';
 import { UpdateVehicleDto } from './dto/update-vehicle.dto';
 import { CreateRefuelingLogDto } from './dto/create-refueling-log.dto';
-import { Vehicle, RefuelingLog, Prisma } from '@project-budget/database';
+import {
+  Vehicle,
+  RefuelingLog,
+  Prisma,
+  VehicleMaintenance,
+  TransactionClassification,
+} from '@project-budget/database';
 
 @Injectable()
 export class VehiclesService {
@@ -74,6 +80,68 @@ export class VehiclesService {
         transactionId,
       },
     });
+  }
+
+  async getMaintenances(
+    vehicleId: string,
+    userId: string,
+  ): Promise<VehicleMaintenance[]> {
+    await this.findOne(vehicleId, userId);
+
+    return this.database.vehicleMaintenance.findMany({
+      where: {
+        vehicleId,
+        transaction: { isActive: true },
+      },
+      include: { transaction: true },
+      orderBy: [{ transaction: { date: 'desc' } }, { odometer: 'desc' }],
+    });
+  }
+
+  async getExpensesStats(vehicleId: string, userId: string) {
+    await this.findOne(vehicleId, userId);
+
+    const [fuelTransactions, maintenanceTransactions] = await Promise.all([
+      this.database.transaction.findMany({
+        where: {
+          userId,
+          isActive: true,
+          classification: TransactionClassification.FUEL,
+          refuelingLog: {
+            vehicleId,
+          },
+        },
+        select: { amount: true },
+      }),
+      this.database.transaction.findMany({
+        where: {
+          userId,
+          isActive: true,
+          classification: TransactionClassification.MAINTENANCE,
+          maintenanceLog: {
+            vehicleId,
+          },
+        },
+        select: { amount: true },
+      }),
+    ]);
+
+    const totalFuel = fuelTransactions.reduce(
+      (acc, t) => acc + Number(t.amount),
+      0,
+    );
+    const totalMaintenance = maintenanceTransactions.reduce(
+      (acc, t) => acc + Number(t.amount),
+      0,
+    );
+
+    const total = totalFuel + totalMaintenance;
+
+    return {
+      totalFuel: parseFloat(totalFuel.toFixed(2)),
+      totalMaintenance: parseFloat(totalMaintenance.toFixed(2)),
+      total: parseFloat(total.toFixed(2)),
+    };
   }
 
   async getRefuelings(

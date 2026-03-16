@@ -13,6 +13,7 @@ import {
   TransactionType,
   TransactionClassification,
   FuelType,
+  MaintenanceType,
 } from '@project-budget/database';
 
 export class CreateTransactionDto {
@@ -81,4 +82,13 @@ export class CreateTransactionDto {
   @IsNumber()
   @IsOptional()
   pricePerLiter?: number;
+
+  // Maintenance specific fields
+  @IsEnum(MaintenanceType)
+  @IsOptional()
+  maintenanceType?: MaintenanceType;
+
+  @IsString()
+  @IsOptional()
+  provider?: string;
 }

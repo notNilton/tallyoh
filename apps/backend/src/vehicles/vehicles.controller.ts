@@ -1,17 +1,22 @@
 import {
-  Controller,
-  Get,
-  Post,
   Body,
-  Param,
+  Controller,
   Delete,
+  Get,
+  Param,
   Patch,
+  Post,
   UseGuards,
 } from '@nestjs/common';
 import { VehiclesService } from './vehicles.service';
 import { CreateVehicleDto } from './dto/create-vehicle.dto';
 import { UpdateVehicleDto } from './dto/update-vehicle.dto';
-import { Vehicle, User, RefuelingLog } from '@project-budget/database';
+import {
+  RefuelingLog,
+  User,
+  Vehicle,
+  VehicleMaintenance,
+} from '@project-budget/database';
 import { JwtAuthGuard } from '../auth/auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
 
@@ -63,8 +68,21 @@ export class VehiclesController {
     return this.vehiclesService.getRefuelings(id, user.id);
   }
 
+  @Get(':id/maintenances')
+  getMaintenances(
+    @Param('id') id: string,
+    @CurrentUser() user: User,
+  ): Promise<VehicleMaintenance[]> {
+    return this.vehiclesService.getMaintenances(id, user.id);
+  }
+
   @Get(':id/stats')
   getStats(@Param('id') id: string, @CurrentUser() user: User) {
     return this.vehiclesService.getStats(id, user.id);
+  }
+
+  @Get(':id/expenses-stats')
+  getExpensesStats(@Param('id') id: string, @CurrentUser() user: User) {
+    return this.vehiclesService.getExpensesStats(id, user.id);
   }
 }

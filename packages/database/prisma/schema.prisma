@@ -157,6 +157,7 @@ enum TransactionType {
 enum TransactionClassification {
     COMMON
     FUEL
+    MAINTENANCE
 }
 
 enum TransactionStatus {
@@ -251,7 +252,8 @@ model Transaction {
     createdAt DateTime @default(now()) @map("created_at")
     updatedAt DateTime @updatedAt @map("updated_at")
 
-    refuelingLog RefuelingLog?
+    refuelingLog   RefuelingLog?
+    maintenanceLog VehicleMaintenance?
 
     @@index([date])
     @@index([userId, date])
@@ -370,7 +372,8 @@ model Vehicle {
     createdAt DateTime @default(now()) @map("created_at")
     updatedAt DateTime @updatedAt @map("updated_at")
 
-    refuelings RefuelingLog[]
+    refuelings   RefuelingLog[]
+    maintenances VehicleMaintenance[]
 
     @@map("vehicles")
 }
@@ -393,6 +396,33 @@ model RefuelingLog {
     createdAt DateTime @default(now()) @map("created_at")
 
     @@map("refueling_logs")
+}
+
+model VehicleMaintenance {
+    id        String  @id @default(uuid())
+    vehicleId String  @map("vehicle_id")
+    vehicle   Vehicle @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+    transactionId String      @unique @map("transaction_id")
+    transaction   Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+
+    type        MaintenanceType
+    description String?         @db.VarChar(255)
+    odometer    Decimal?        @db.Decimal(10, 2)
+    provider    String?         @db.VarChar(100)
+
+    createdAt DateTime @default(now()) @map("created_at")
+
+    @@map("vehicle_maintenances")
+}
+
+enum MaintenanceType {
+    OIL_CHANGE
+    TIRE_CHANGE
+    PREVENTIVE
+    REPAIR
+    PART_REPLACEMENT
+    OTHER
 }
 
 enum FuelType {

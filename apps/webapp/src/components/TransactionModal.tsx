@@ -27,6 +27,10 @@ interface TransactionModalProps {
   onSuccess: () => void;
   mode?: 'create' | 'edit';
   initialData?: Transaction | null;
+  /** opcional: contexto de veículo atual (ex: vindo da tela de evolução) */
+  defaultVehicleId?: string;
+  /** opcional: tipo de gasto sugerido ao abrir o modal */
+  defaultClassification?: 'COMMON' | 'FUEL' | 'MAINTENANCE';
 }
 
 interface Transaction {
@@ -62,6 +66,8 @@ export function TransactionModal({
   onSuccess,
   mode = 'create',
   initialData,
+  defaultVehicleId,
+  defaultClassification,
 }: TransactionModalProps) {
   const isEditing = mode === 'edit';
   const fuelData = initialData?.refuelingLog;
@@ -84,8 +90,12 @@ export function TransactionModal({
   );
 
   // Fuel specific state
-  const [classification, setClassification] = useState(initialData?.classification ?? 'COMMON');
-  const [vehicleId, setVehicleId] = useState(fuelData?.vehicleId ?? initialData?.vehicleId ?? '');
+  const [classification, setClassification] = useState<string>(
+    initialData?.classification ?? defaultClassification ?? 'COMMON',
+  );
+  const [vehicleId, setVehicleId] = useState(
+    fuelData?.vehicleId ?? initialData?.vehicleId ?? defaultVehicleId ?? '',
+  );
   const [currentKm, setCurrentKm] = useState(
     fuelData?.odometer
       ? Math.floor(Number(fuelData.odometer)).toString()

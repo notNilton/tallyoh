@@ -95,6 +95,8 @@ export class TransactionsService {
       currentKm,
       liters,
       pricePerLiter,
+      maintenanceType,
+      provider,
     } = dto;
 
     return this.db.transaction.create({
@@ -110,21 +112,44 @@ export class TransactionsService {
         description,
         notes,
         currencyCode: currencyCode ?? 'BRL',
-        ...(classification === 'FUEL' &&
-          vehicleId && {
-            refuelingLog: {
-              create: {
-                vehicleId,
-                station,
-                fuelType,
-                odometer: new Prisma.Decimal(currentKm ?? 0),
-                fuelLiters: new Prisma.Decimal(liters ?? 0),
-                pricePerLiter: new Prisma.Decimal(pricePerLiter ?? 0),
-              },
-            },
-          }),
+        // Create refueling log when it's a fuel transaction linked to a vehicle
+        refuelingLog:
+          classification === 'FUEL' && vehicleId
+            ? {
+                create: {
+                  vehicleId,
+                  fuelType: fuelType ?? undefined,
+                  station,
+                  odometer: new Prisma.Decimal(currentKm ?? 0),
+                  fuelLiters: new Prisma.Decimal(liters ?? 0),
+                  pricePerLiter: new Prisma.Decimal(pricePerLiter ?? 0),
+                  isFullTank: true,
+                },
+              }
+            : undefined,
+        // Create maintenance log when it's a maintenance transaction linked to a vehicle
+        maintenanceLog:
+          classification === 'MAINTENANCE' && vehicleId && maintenanceType
+            ? {
+                create: {
+                  vehicleId,
+                  type: maintenanceType,
+                  provider,
+                  odometer:
+                    typeof currentKm === 'number'
+                      ? new Prisma.Decimal(currentKm)
+                      : undefined,
+                  description: notes,
+                },
+              }
+            : undefined,
       },
-      include: { category: true, tags: true, refuelingLog: true },
+      include: {
+        category: true,
+        tags: true,
+        refuelingLog: true,
+        maintenanceLog: true,
+      },
     });
   }
 
@@ -142,6 +167,8 @@ export class TransactionsService {
       liters,
       pricePerLiter,
       station,
+      maintenanceType,
+      provider,
       classification,
       amount,
       date,
@@ -159,31 +186,64 @@ export class TransactionsService {
         date: date ? new Date(date) : undefined,
         account: accountId ? { connect: { id: accountId } } : undefined,
         category: categoryId ? { connect: { id: categoryId } } : undefined,
-        ...(classification === 'FUEL' &&
-          vehicleId && {
-            refuelingLog: {
-              upsert: {
-                create: {
-                  vehicleId,
-                  station,
-                  fuelType,
-                  odometer: new Prisma.Decimal(currentKm ?? 0),
-                  fuelLiters: new Prisma.Decimal(liters ?? 0),
-                  pricePerLiter: new Prisma.Decimal(pricePerLiter ?? 0),
+        refuelingLog:
+          classification === 'FUEL' && vehicleId
+            ? {
+                upsert: {
+                  create: {
+                    vehicleId,
+                    fuelType: fuelType ?? undefined,
+                    station,
+                    odometer: new Prisma.Decimal(currentKm ?? 0),
+                    fuelLiters: new Prisma.Decimal(liters ?? 0),
+                    pricePerLiter: new Prisma.Decimal(pricePerLiter ?? 0),
+                    isFullTank: true,
+                  },
+                  update: {
+                    vehicleId,
+                    fuelType: fuelType ?? undefined,
+                    station,
+                    odometer: new Prisma.Decimal(currentKm ?? 0),
+                    fuelLiters: new Prisma.Decimal(liters ?? 0),
+                    pricePerLiter: new Prisma.Decimal(pricePerLiter ?? 0),
+                  },
                 },
-                update: {
-                  vehicleId,
-                  station,
-                  fuelType,
-                  odometer: new Prisma.Decimal(currentKm ?? 0),
-                  fuelLiters: new Prisma.Decimal(liters ?? 0),
-                  pricePerLiter: new Prisma.Decimal(pricePerLiter ?? 0),
+              }
+            : undefined,
+        maintenanceLog:
+          classification === 'MAINTENANCE' && vehicleId && maintenanceType
+            ? {
+                upsert: {
+                  create: {
+                    vehicleId,
+                    type: maintenanceType,
+                    provider,
+                    odometer:
+                      typeof currentKm === 'number'
+                        ? new Prisma.Decimal(currentKm)
+                        : undefined,
+                    description: rest.notes,
+                  },
+                  update: {
+                    vehicleId,
+                    type: maintenanceType,
+                    provider,
+                    odometer:
+                      typeof currentKm === 'number'
+                        ? new Prisma.Decimal(currentKm)
+                        : undefined,
+                    description: rest.notes,
+                  },
                 },
-              },
-            },
-          }),
+              }
+            : undefined,
       },
-      include: { category: true, tags: true, refuelingLog: true },
+      include: {
+        category: true,
+        tags: true,
+        refuelingLog: true,
+        maintenanceLog: true,
+      },
     });
   }
 
