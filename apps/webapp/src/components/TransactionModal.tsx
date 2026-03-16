@@ -96,6 +96,7 @@ export function TransactionModal({
   const [accountId, setAccountId] = useState(
     initialData?.accountId ?? initialData?.account?.id ?? '',
   );
+  const [totalInstallments, setTotalInstallments] = useState(1);
 
   // Fuel specific state
   const [classification, setClassification] = useState<string>(
@@ -125,12 +126,12 @@ export function TransactionModal({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Still use useEffect to handle cleaning error but rely on key for resetting
   useEffect(() => {
     if (isOpen) {
       setError(null);
+      if (!initialData) setTotalInstallments(1);
     }
-  }, [isOpen]);
+  }, [isOpen, initialData]);
 
   const { data: categories = [] } = useQuery({
     queryKey: ['categories'],
@@ -191,6 +192,12 @@ export function TransactionModal({
     style: 'currency',
     currency: 'BRL',
   });
+  const amountValue = Number(amount) / 100;
+  const installmentValue = totalInstallments > 1 ? amountValue / totalInstallments : amountValue;
+  const formattedInstallment = installmentValue.toLocaleString('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+  });
 
   // KM formatting (e.g., 160.148)
   const handleKmChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -242,6 +249,7 @@ export function TransactionModal({
           undefined,
         accountId,
         classification,
+        ...(!isEditing && totalInstallments > 1 && { totalInstallments }),
         ...(classification === 'FUEL' && {
           vehicleId,
           currentKm: Number(currentKm),
@@ -325,8 +333,8 @@ export function TransactionModal({
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            {/* Amount */}
-            <div className={isFuel ? 'col-span-1' : 'col-span-1'}>
+            {/* Valor Total */}
+            <div>
               <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1.5 block">
                 Valor Total
               </label>
@@ -340,6 +348,30 @@ export function TransactionModal({
                   className={`w-full bg-muted/40 border border-border rounded-xl px-4 py-2.5 text-sm font-bold focus:ring-2 outline-none transition-smooth ${isExpense ? 'text-rose-500 focus:ring-rose-500/20' : 'text-emerald-500 focus:ring-emerald-500/20'}`}
                 />
               </div>
+            </div>
+
+            {/* Parcelas */}
+            <div>
+              <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1.5 block">
+                Parcelas
+              </label>
+              <select
+                value={totalInstallments}
+                onChange={(e) => setTotalInstallments(Number(e.target.value))}
+                disabled={isEditing}
+                className="w-full bg-muted/40 border border-border rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-smooth appearance-none disabled:opacity-50"
+              >
+                {Array.from({ length: 21 }, (_, i) => i + 1).map((n) => (
+                  <option key={n} value={n}>
+                    {n === 1 ? 'À vista (1x)' : `${n}x`}
+                  </option>
+                ))}
+              </select>
+              {totalInstallments > 1 && (
+                <p className="text-[10px] font-bold text-muted-foreground mt-1.5">
+                  Valor por parcela: {formattedInstallment}
+                </p>
+              )}
             </div>
 
             {/* Date */}

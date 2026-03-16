@@ -7,7 +7,9 @@ import {
   IsOptional,
   IsString,
   IsUUID,
+  Max,
   MaxLength,
+  Min,
 } from 'class-validator';
 import {
   TransactionType,
@@ -39,6 +41,12 @@ export class CreateTransactionDto {
 
   @IsNumber()
   amount: number;
+
+  @IsNumber()
+  @IsOptional()
+  @Min(1)
+  @Max(21)
+  totalInstallments?: number;
 
   @IsDateString()
   date: Date;

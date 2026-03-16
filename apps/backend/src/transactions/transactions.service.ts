@@ -85,6 +85,7 @@ export class TransactionsService {
       classification,
       isRecurring,
       amount,
+      totalInstallments,
       date,
       description,
       notes,
@@ -99,6 +100,94 @@ export class TransactionsService {
       provider,
     } = dto;
 
+    const parts =
+      totalInstallments && totalInstallments > 1 ? totalInstallments : 1;
+    const amountPerPart = Number(amount) / parts;
+
+    if (parts > 1) {
+      const firstDate = new Date(date);
+      const created = await this.db.$transaction(async (tx) => {
+        const inst = await tx.installment.create({
+          data: {
+            userId,
+            totalAmount: new Prisma.Decimal(amount),
+            totalParts: parts,
+            description,
+            date: firstDate,
+          },
+        });
+
+        let firstTx: Transaction | null = null;
+        for (let i = 1; i <= parts; i++) {
+          const installmentDate = new Date(firstDate);
+          installmentDate.setMonth(installmentDate.getMonth() + (i - 1));
+
+          const isFirst = i === 1;
+          const txData = {
+            userId,
+            accountId,
+            categoryId,
+            type,
+            classification: classification ?? 'COMMON',
+            isRecurring: isRecurring ?? false,
+            amount: new Prisma.Decimal(amountPerPart),
+            date: installmentDate,
+            description:
+              parts > 1 ? `${description} (${i}/${parts})` : description,
+            notes,
+            currencyCode: currencyCode ?? 'BRL',
+            installmentId: inst.id,
+            installmentNum: i,
+            totalInstallments: parts,
+            refuelingLog:
+              isFirst && classification === 'FUEL' && vehicleId
+                ? {
+                    create: {
+                      vehicleId,
+                      fuelType: fuelType ?? undefined,
+                      station,
+                      odometer: new Prisma.Decimal(currentKm ?? 0),
+                      fuelLiters: new Prisma.Decimal(liters ?? 0),
+                      pricePerLiter: new Prisma.Decimal(pricePerLiter ?? 0),
+                      isFullTank: true,
+                    },
+                  }
+                : undefined,
+            maintenanceLog:
+              isFirst &&
+              classification === 'MAINTENANCE' &&
+              vehicleId &&
+              maintenanceType
+                ? {
+                    create: {
+                      vehicleId,
+                      type: maintenanceType,
+                      provider,
+                      odometer:
+                        typeof currentKm === 'number'
+                          ? new Prisma.Decimal(currentKm)
+                          : undefined,
+                      description: notes,
+                    },
+                  }
+                : undefined,
+          };
+          const t = await tx.transaction.create({
+            data: txData,
+            include: {
+              category: true,
+              tags: true,
+              refuelingLog: true,
+              maintenanceLog: true,
+            },
+          });
+          if (i === 1) firstTx = t;
+        }
+        return firstTx!;
+      });
+      return created;
+    }
+
     return this.db.transaction.create({
       data: {
         userId,
@@ -112,7 +201,6 @@ export class TransactionsService {
         description,
         notes,
         currencyCode: currencyCode ?? 'BRL',
-        // Create refueling log when it's a fuel transaction linked to a vehicle
         refuelingLog:
           classification === 'FUEL' && vehicleId
             ? {
@@ -127,7 +215,6 @@ export class TransactionsService {
                 },
               }
             : undefined,
-        // Create maintenance log when it's a maintenance transaction linked to a vehicle
         maintenanceLog:
           classification === 'MAINTENANCE' && vehicleId && maintenanceType
             ? {
