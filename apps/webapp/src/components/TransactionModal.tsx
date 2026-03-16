@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowUpRight, ArrowDownLeft, Calendar, Paperclip, Lock, X, Loader2 } from 'lucide-react';
+import { ArrowUpRight, ArrowDownLeft, Calendar, Lock, X, Loader2 } from 'lucide-react';
 import { api } from '../lib/api';
 import { getBrandIcon } from '../lib/vehicle-brands';
 
@@ -8,6 +8,7 @@ interface Category {
   id: string;
   name: string;
   icon?: string;
+  type: 'INCOME' | 'EXPENSE';
 }
 
 interface Account {
@@ -72,6 +73,13 @@ export function TransactionModal({
   const isEditing = mode === 'edit';
   const fuelData = initialData?.refuelingLog;
 
+  const normalize = (value: string) =>
+    value
+      .trim()
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '');
+
   const [isExpense, setIsExpense] = useState(initialData ? initialData.type === 'EXPENSE' : true);
   const [isRecurring, setIsRecurring] = useState(initialData?.isRecurring ?? false);
   const [date, setDate] = useState(
@@ -79,7 +87,7 @@ export function TransactionModal({
       ? new Date(initialData.date).toISOString().split('T')[0]
       : new Date().toISOString().split('T')[0],
   );
-  const [description, setDescription] = useState(initialData?.description ?? '');
+  const [description] = useState(initialData?.description ?? '');
   const [amount, setAmount] = useState(
     initialData ? Math.floor(Math.abs(Number(initialData.amount)) * 100).toString() : '0',
   );
@@ -131,6 +139,10 @@ export function TransactionModal({
     enabled: isOpen,
   });
 
+  const filteredCategories = categories.filter(
+    (cat) => cat.type === (isExpense ? 'EXPENSE' : 'INCOME'),
+  );
+
   const { data: accounts = [] } = useQuery({
     queryKey: ['accounts'],
     queryFn: () => api.get<Account[]>('/accounts'),
@@ -142,16 +154,31 @@ export function TransactionModal({
     queryKey: ['vehicles'],
     queryFn: () => api.get<Vehicle[]>('/vehicles'),
     staleTime: 1000 * 60 * 5,
-    enabled: isOpen && classification === 'FUEL',
+    enabled: isOpen,
   });
 
-  // Automatically find Refueling category if not set and classification is FUEL
+  // Sincroniza classificação com categorias especiais (Veículo-Combustível / Veículo-Manutenção)
   useEffect(() => {
-    if (classification === 'FUEL' && !categoryId && categories.length > 0) {
-      const fuelCat = categories.find((c) => c.name.toLowerCase().includes('abastecimento'));
-      if (fuelCat) setCategoryId(fuelCat.id);
+    if (!isExpense || filteredCategories.length === 0) {
+      if (classification !== 'COMMON') setClassification('COMMON');
+      return;
     }
-  }, [classification, categories, categoryId]);
+
+    const currentCat = filteredCategories.find((c) => c.id === categoryId);
+    if (!currentCat) {
+      setClassification('COMMON');
+      return;
+    }
+
+    const norm = normalize(currentCat.name);
+    if (norm === 'veiculo-combustivel' || norm.includes('abastecimento')) {
+      if (classification !== 'FUEL') setClassification('FUEL');
+    } else if (norm === 'veiculo-manutencao' || norm.includes('manutencao')) {
+      if (classification !== 'MAINTENANCE') setClassification('MAINTENANCE');
+    } else if (classification !== 'COMMON') {
+      setClassification('COMMON');
+    }
+  }, [isExpense, filteredCategories, categoryId, classification]);
 
   if (!isOpen) return null;
 
@@ -184,6 +211,9 @@ export function TransactionModal({
     maximumFractionDigits: 3,
   });
 
+  const vehicleFuelCategoryId =
+    filteredCategories.find((c) => normalize(c.name) === 'veiculo-combustivel')?.id ?? null;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -193,14 +223,23 @@ export function TransactionModal({
     const actualLiters = Number(liters) / 1000;
 
     try {
+      const forcedCategoryIdForFuel = classification === 'FUEL' ? vehicleFuelCategoryId : null;
+
       const payload = {
-        description: classification === 'FUEL' ? 'Abastecimento' : description,
+        description:
+          classification === 'FUEL'
+            ? 'Abastecimento'
+            : classification === 'MAINTENANCE'
+              ? 'Manutenção veicular'
+              : description,
         amount: actualAmount,
         date,
         type: isExpense ? 'EXPENSE' : 'INCOME',
         isRecurring: classification === 'FUEL' ? false : isRecurring,
         notes: notes || undefined,
-        categoryId: categoryId || undefined,
+        categoryId:
+          (classification === 'FUEL' ? (forcedCategoryIdForFuel ?? categoryId) : categoryId) ||
+          undefined,
         accountId,
         classification,
         ...(classification === 'FUEL' && {
@@ -209,6 +248,12 @@ export function TransactionModal({
           liters: actualLiters,
           pricePerLiter: actualLiters > 0 ? actualAmount / actualLiters : 0,
           fuelType,
+        }),
+        ...(classification === 'MAINTENANCE' && {
+          vehicleId,
+          currentKm: Number(currentKm),
+          maintenanceType: 'OTHER',
+          provider: undefined,
         }),
       };
 
@@ -228,6 +273,7 @@ export function TransactionModal({
   };
 
   const isFuel = classification === 'FUEL';
+  const isMaintenance = classification === 'MAINTENANCE';
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-background/40 backdrop-blur-sm animate-in fade-in duration-200">
@@ -278,54 +324,7 @@ export function TransactionModal({
             </button>
           </div>
 
-          {isExpense && (
-            <div
-              className={`flex gap-2 p-1 bg-muted rounded-2xl ${isEditing ? 'opacity-50 cursor-not-allowed' : ''}`}
-            >
-              <button
-                type="button"
-                onClick={() => !isEditing && setClassification('COMMON')}
-                className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-smooth ${classification === 'COMMON' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:bg-muted-foreground/5'}`}
-              >
-                Comum
-              </button>
-              <button
-                type="button"
-                onClick={() => !isEditing && setClassification('FUEL')}
-                className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-smooth ${classification === 'FUEL' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:bg-muted-foreground/5'}`}
-              >
-                Abastecimento
-              </button>
-            </div>
-          )}
-
           <div className="grid grid-cols-2 gap-4">
-            {/* Description - Hidden for Fuel */}
-            {!isFuel && (
-              <div className="col-span-2">
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground block">
-                    Descrição
-                  </label>
-                  <button
-                    type="button"
-                    className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-primary hover:text-primary/80 transition-smooth"
-                  >
-                    <Paperclip className="w-3 h-3" />
-                    Anexar
-                  </button>
-                </div>
-                <input
-                  required
-                  type="text"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Ex: Salário Mensal"
-                  className="w-full bg-muted/40 border border-border rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-smooth"
-                />
-              </div>
-            )}
-
             {/* Amount */}
             <div className={isFuel ? 'col-span-1' : 'col-span-1'}>
               <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1.5 block">
@@ -357,26 +356,24 @@ export function TransactionModal({
               />
             </div>
 
-            {/* Category - Hidden for Fuel */}
-            {!isFuel && (
-              <div>
-                <label className="text-[10px) font-bold uppercase tracking-widest text-muted-foreground mb-1.5 block">
-                  Categoria
-                </label>
-                <select
-                  value={categoryId}
-                  onChange={(e) => setCategoryId(e.target.value)}
-                  className="w-full bg-muted/40 border border-border rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-smooth appearance-none"
-                >
-                  <option value="">Sem categoria</option>
-                  {categories.map((cat) => (
-                    <option key={cat.id} value={cat.id}>
-                      {cat.icon} {cat.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
+            {/* Category */}
+            <div>
+              <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1.5 block">
+                Categoria
+              </label>
+              <select
+                value={categoryId}
+                onChange={(e) => setCategoryId(e.target.value)}
+                className="w-full bg-muted/40 border border-border rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-smooth appearance-none"
+              >
+                <option value="">Sem categoria</option>
+                {filteredCategories.map((cat) => (
+                  <option key={cat.id} value={cat.id}>
+                    {cat.icon} {cat.name}
+                  </option>
+                ))}
+              </select>
+            </div>
 
             {/* Account */}
             <div className="col-span-1">
@@ -398,8 +395,8 @@ export function TransactionModal({
               </select>
             </div>
 
-            {/* Fuel Specific Fields integrated */}
-            {isFuel && (
+            {/* Campos de veículo (combustível / manutenção) */}
+            {(isFuel || isMaintenance) && (
               <>
                 <div className="col-span-2 grid grid-cols-2 gap-4">
                   <div>
@@ -408,7 +405,7 @@ export function TransactionModal({
                     </label>
                     <div className="relative">
                       <select
-                        required={isFuel}
+                        required={isFuel || isMaintenance}
                         value={vehicleId}
                         onChange={(e) => setVehicleId(e.target.value)}
                         className="w-full bg-muted/40 border border-border rounded-xl pl-10 pr-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 outline-none appearance-none transition-smooth"
@@ -433,24 +430,26 @@ export function TransactionModal({
                     </div>
                   </div>
 
-                  <div>
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1.5 block">
-                      Tipo de Combustível
-                    </label>
-                    <select
-                      value={fuelType}
-                      onChange={(e) => setFuelType(e.target.value)}
-                      className="w-full bg-muted/40 border border-border rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 outline-none appearance-none transition-smooth"
-                    >
-                      <option value="GASOLINA_COMUM">Gasolina Comum</option>
-                      <option value="GASOLINA_ADITIVADA">Gasolina Aditivada</option>
-                      <option value="ETANOL">Etanol</option>
-                      <option value="DIESEL">Diesel</option>
-                      <option value="GNV">GNV</option>
-                    </select>
-                  </div>
+                  {isFuel && (
+                    <div>
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1.5 block">
+                        Tipo de Combustível
+                      </label>
+                      <select
+                        value={fuelType}
+                        onChange={(e) => setFuelType(e.target.value)}
+                        className="w-full bg-muted/40 border border-border rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 outline-none appearance-none transition-smooth"
+                      >
+                        <option value="GASOLINA_COMUM">Gasolina Comum</option>
+                        <option value="GASOLINA_ADITIVADA">Gasolina Aditivada</option>
+                        <option value="ETANOL">Etanol</option>
+                        <option value="DIESEL">Diesel</option>
+                        <option value="GNV">GNV</option>
+                      </select>
+                    </div>
+                  )}
 
-                  <div>
+                  <div className={isFuel ? '' : 'col-span-1'}>
                     <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1.5 block">
                       Odômetro (KM)
                     </label>
@@ -464,30 +463,32 @@ export function TransactionModal({
                     />
                   </div>
 
-                  <div>
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1.5 block">
-                      Litros
-                    </label>
-                    <div className="relative">
-                      <input
-                        type="text"
-                        inputMode="numeric"
-                        value={formattedLiters}
-                        onChange={handleLitersChange}
-                        placeholder="Ex: 45,234"
-                        className="w-full bg-muted/40 border border-border rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-smooth"
-                      />
-                      {Number(liters) > 0 && Number(amount) > 0 && (
-                        <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-primary">
-                          {(Number(amount) / 100 / (Number(liters) / 1000)).toLocaleString(
-                            'pt-BR',
-                            { style: 'currency', currency: 'BRL' },
-                          )}
-                          /L
-                        </div>
-                      )}
+                  {isFuel && (
+                    <div>
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1.5 block">
+                        Litros
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          value={formattedLiters}
+                          onChange={handleLitersChange}
+                          placeholder="Ex: 45,234"
+                          className="w-full bg-muted/40 border border-border rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-smooth"
+                        />
+                        {Number(liters) > 0 && Number(amount) > 0 && (
+                          <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-primary">
+                            {(Number(amount) / 100 / (Number(liters) / 1000)).toLocaleString(
+                              'pt-BR',
+                              { style: 'currency', currency: 'BRL' },
+                            )}
+                            /L
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               </>
             )}

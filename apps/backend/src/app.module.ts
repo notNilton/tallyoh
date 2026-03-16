@@ -13,6 +13,8 @@ import { AuthModule } from './auth/auth.module';
 import { VehiclesModule } from './vehicles/vehicles.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { SettingsModule } from './settings/settings.module';
+import { TagsModule } from './tags/tags.module';
+import { CardsModule } from './cards/cards.module';
 
 @Module({
   imports: [
@@ -28,6 +30,8 @@ import { SettingsModule } from './settings/settings.module';
     VehiclesModule,
     DashboardModule,
     SettingsModule,
+    TagsModule,
+    CardsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

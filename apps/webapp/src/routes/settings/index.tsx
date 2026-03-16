@@ -7,6 +7,7 @@ import {
   LogOut,
   CarFront,
   Wallet,
+  Tags,
   type LucideIcon,
 } from 'lucide-react';
 import { api } from '../../lib/api';
@@ -143,6 +144,12 @@ function SettingsPage() {
             to="/settings/accounts"
             title="Gerenciar Contas Bancárias"
             description="Gerencie seus saldos e instituições financeiras."
+          />
+          <SettingItem
+            icon={Tags}
+            to="/settings/categories"
+            title="Categorias e Etiquetas"
+            description="Organize categorias de gastos e receitas."
           />
         </div>
       </div>

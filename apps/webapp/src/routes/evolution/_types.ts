@@ -56,6 +56,9 @@ export interface VehicleMaintenanceLog {
   transaction: {
     amount: number | string;
     date: string;
+    category?: {
+      name: string;
+    } | null;
   };
 }
 

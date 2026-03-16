@@ -8,6 +8,7 @@ import {
   Building,
   PiggyBank,
   CreditCard,
+  CreditCard as CreditCardIcon,
   Banknote,
   ArrowRight,
   Edit2,
@@ -16,11 +17,20 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { api } from '../../lib/api';
-import { AccountModal } from '../../components/AccountModal';
+import { AccountModal, type AccountModalTab } from '../../components/AccountModal';
 
 export const Route = createFileRoute('/settings/accounts')({
   component: AccountsPage,
 });
+
+interface Card {
+  id: string;
+  accountId: string;
+  name: string;
+  type: 'CREDIT' | 'DEBIT';
+  creditLimit?: number | string | null;
+  color?: string | null;
+}
 
 interface Account {
   id: string;
@@ -29,6 +39,7 @@ interface Account {
   type: 'CHECKING' | 'SAVINGS' | 'CREDIT_CARD' | 'CASH' | 'WALLET' | 'INVESTMENT';
   color: string;
   icon: string;
+  cards?: Card[];
 }
 
 const TYPE_LABELS: Record<string, string> = {
@@ -38,6 +49,11 @@ const TYPE_LABELS: Record<string, string> = {
   CASH: 'Dinheiro',
   WALLET: 'Carteira',
   INVESTMENT: 'Investimento',
+};
+
+const CARD_TYPE_LABELS: Record<string, string> = {
+  CREDIT: 'Crédito',
+  DEBIT: 'Débito',
 };
 
 const ICON_MAP: Record<string, LucideIcon> = {
@@ -50,15 +66,22 @@ const ICON_MAP: Record<string, LucideIcon> = {
 
 function AccountCard({
   account,
-  onEdit,
-  onDelete,
+  onEditAccount,
+  onDeleteAccount,
+  onAddCard,
+  onEditCard,
+  onDeleteCard,
 }: {
   account: Account;
-  onEdit: (a: Account) => void;
-  onDelete: (id: string) => void;
+  onEditAccount: (a: Account) => void;
+  onDeleteAccount: (id: string) => void;
+  onAddCard: (accountId: string) => void;
+  onEditCard: (card: Card) => void;
+  onDeleteCard: (cardId: string) => void;
 }) {
   const Icon = ICON_MAP[account.icon] || Wallet;
   const balanceValue = Number(account.balance);
+  const cards = account.cards ?? [];
 
   return (
     <div className="card-premium p-6 group relative overflow-hidden h-full flex flex-col">
@@ -80,14 +103,16 @@ function AccountCard({
             </span>
             <div className="opacity-0 group-hover:opacity-100 flex gap-1 transition-smooth">
               <button
-                onClick={() => onEdit(account)}
+                onClick={() => onEditAccount(account)}
                 className="p-1.5 rounded-lg hover:bg-primary/10 text-muted-foreground hover:text-primary transition-smooth"
+                title="Editar conta"
               >
                 <Edit2 className="w-3.5 h-3.5" />
               </button>
               <button
-                onClick={() => onDelete(account.id)}
+                onClick={() => onDeleteAccount(account.id)}
                 className="p-1.5 rounded-lg hover:bg-rose-500/10 text-muted-foreground hover:text-rose-500 transition-smooth"
+                title="Excluir conta"
               >
                 <Trash2 className="w-3.5 h-3.5" />
               </button>
@@ -100,7 +125,78 @@ function AccountCard({
             <PrivacyAmount value={balanceValue} />
           </p>
         </div>
-        <div className="flex items-center gap-1.5 text-[11px] font-bold text-primary opacity-0 group-hover:opacity-100 transition-smooth translate-y-1 group-hover:translate-y-0 text-right justify-end mt-auto">
+
+        {/* Cartões vinculados */}
+        <div className="mt-auto pt-4 border-t border-border/50 space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+              Cartões
+            </span>
+            <button
+              type="button"
+              onClick={() => onAddCard(account.id)}
+              className="text-[10px] font-bold text-primary hover:underline flex items-center gap-1"
+            >
+              <Plus className="w-3 h-3" />
+              Adicionar
+            </button>
+          </div>
+          {cards.length === 0 ? (
+            <p className="text-[11px] text-muted-foreground italic">Nenhum cartão vinculado</p>
+          ) : (
+            <ul className="space-y-1.5">
+              {cards.map((card) => (
+                <li
+                  key={card.id}
+                  className="flex items-center justify-between gap-2 py-2 px-3 rounded-xl bg-muted/30 border border-border/50 group/card"
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div
+                      className="p-1.5 rounded-lg shrink-0"
+                      style={{
+                        backgroundColor: (card.color ?? account.color) + '20',
+                        color: card.color ?? account.color,
+                      }}
+                    >
+                      <CreditCardIcon className="w-3.5 h-3.5" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold truncate">{card.name}</p>
+                      <p className="text-[10px] text-muted-foreground">
+                        {CARD_TYPE_LABELS[card.type]}
+                        {card.type === 'CREDIT' && card.creditLimit != null && (
+                          <>
+                            {' '}
+                            · Limite{' '}
+                            <PrivacyAmount value={Number(card.creditLimit)} className="inline" />
+                          </>
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex gap-1 opacity-0 group-hover/card:opacity-100 transition-smooth shrink-0">
+                    <button
+                      onClick={() => onEditCard(card)}
+                      className="p-1.5 rounded-lg hover:bg-primary/10 text-muted-foreground hover:text-primary transition-smooth"
+                      title="Editar cartão"
+                    >
+                      <Edit2 className="w-3 h-3" />
+                    </button>
+                    <button
+                      onClick={() => onDeleteCard(card.id)}
+                      className="p-1.5 rounded-lg hover:bg-rose-500/10 text-muted-foreground hover:text-rose-500 transition-smooth"
+                      title="Excluir cartão"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        <div className="flex items-center gap-1.5 text-[11px] font-bold text-primary opacity-0 group-hover:opacity-100 transition-smooth translate-y-1 group-hover:translate-y-0 text-right justify-end">
           <span>Detalhes</span>
           <ArrowRight className="w-3.5 h-3.5" />
         </div>
@@ -112,16 +208,26 @@ function AccountCard({
 function AccountsPage() {
   const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalTab, setModalTab] = useState<AccountModalTab>('account');
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
   const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
+  const [selectedCard, setSelectedCard] = useState<Card | null>(null);
+  const [preselectedAccountId, setPreselectedAccountId] = useState<string | null>(null);
 
   const { data: accounts = [], isLoading } = useQuery({
     queryKey: ['accounts'],
     queryFn: () => api.get<Account[]>('/accounts'),
   });
 
-  const deleteMutation = useMutation({
+  const deleteAccountMutation = useMutation({
     mutationFn: (id: string) => api.delete(`/accounts/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['accounts'] });
+    },
+  });
+
+  const deleteCardMutation = useMutation({
+    mutationFn: (id: string) => api.delete(`/cards/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['accounts'] });
     },
@@ -137,26 +243,60 @@ function AccountsPage() {
       .reduce((acc, accnt) => acc + Number(accnt.balance), 0),
   );
 
-  const handleAdd = () => {
+  const openAddAccount = () => {
+    setModalTab('account');
     setModalMode('create');
     setSelectedAccount(null);
+    setSelectedCard(null);
+    setPreselectedAccountId(null);
     setIsModalOpen(true);
   };
 
-  const handleEdit = (account: Account) => {
+  const openAddCard = (accountId?: string) => {
+    setModalTab('card');
+    setModalMode('create');
+    setSelectedAccount(null);
+    setSelectedCard(null);
+    setPreselectedAccountId(accountId ?? null);
+    setIsModalOpen(true);
+  };
+
+  const openEditAccount = (account: Account) => {
+    setModalTab('account');
     setModalMode('edit');
     setSelectedAccount(account);
+    setSelectedCard(null);
+    setPreselectedAccountId(null);
     setIsModalOpen(true);
   };
 
-  const handleDelete = (id: string) => {
+  const openEditCard = (card: Card) => {
+    setModalTab('card');
+    setModalMode('edit');
+    setSelectedAccount(null);
+    setSelectedCard(card);
+    setPreselectedAccountId(null);
+    setIsModalOpen(true);
+  };
+
+  const handleDeleteAccount = (id: string) => {
     if (
       confirm(
         'Tem certeza que deseja excluir esta conta? Todas as transações vinculadas serão mantidas, mas a conta não aparecerá mais.',
       )
     ) {
-      deleteMutation.mutate(id);
+      deleteAccountMutation.mutate(id);
     }
+  };
+
+  const handleDeleteCard = (id: string) => {
+    if (confirm('Tem certeza que deseja excluir este cartão?')) {
+      deleteCardMutation.mutate(id);
+    }
+  };
+
+  const handleModalSuccess = () => {
+    queryClient.invalidateQueries({ queryKey: ['accounts'] });
   };
 
   return (
@@ -165,16 +305,25 @@ function AccountsPage() {
         <div>
           <h1 className="text-3xl font-display font-bold">Suas Contas</h1>
           <p className="text-muted-foreground mt-1">
-            Gerencie suas carteiras, contas bancárias e investimentos.
+            Gerencie suas carteiras, contas bancárias, cartões e investimentos.
           </p>
         </div>
-        <button
-          onClick={handleAdd}
-          className="flex items-center gap-2 px-6 py-3 rounded-full bg-primary text-primary-foreground font-semibold shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-smooth"
-        >
-          <Plus className="w-4 h-4" />
-          Adicionar Conta
-        </button>
+        <div className="flex gap-3">
+          <button
+            onClick={openAddCard}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-full border border-border font-semibold hover:bg-muted/50 transition-smooth"
+          >
+            <CreditCardIcon className="w-4 h-4" />
+            Adicionar Cartão
+          </button>
+          <button
+            onClick={openAddAccount}
+            className="flex items-center gap-2 px-6 py-3 rounded-full bg-primary text-primary-foreground font-semibold shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-smooth"
+          >
+            <Plus className="w-4 h-4" />
+            Adicionar Conta
+          </button>
+        </div>
       </div>
 
       {isLoading ? (
@@ -221,8 +370,11 @@ function AccountsPage() {
               <AccountCard
                 key={account.id}
                 account={account}
-                onEdit={handleEdit}
-                onDelete={handleDelete}
+                onEditAccount={openEditAccount}
+                onDeleteAccount={handleDeleteAccount}
+                onAddCard={openAddCard}
+                onEditCard={openEditCard}
+                onDeleteCard={handleDeleteCard}
               />
             ))}
           </div>
@@ -232,9 +384,12 @@ function AccountsPage() {
       <AccountModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        onSuccess={() => queryClient.invalidateQueries({ queryKey: ['accounts'] })}
+        onSuccess={handleModalSuccess}
+        activeTab={modalTab}
         mode={modalMode}
-        initialData={selectedAccount}
+        initialAccount={selectedAccount}
+        initialCard={selectedCard}
+        preselectedAccountId={preselectedAccountId}
       />
     </div>
   );

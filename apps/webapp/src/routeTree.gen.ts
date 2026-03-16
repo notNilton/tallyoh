@@ -22,6 +22,7 @@ import { Route as EvolutionIndexRouteImport } from './routes/evolution/index'
 import { Route as SettingsVehiclesRouteImport } from './routes/settings/vehicles'
 import { Route as SettingsPersonalInfoRouteImport } from './routes/settings/personal-info'
 import { Route as SettingsDataPrivacyRouteImport } from './routes/settings/data-privacy'
+import { Route as SettingsCategoriesRouteImport } from './routes/settings/categories'
 import { Route as SettingsAccountsRouteImport } from './routes/settings/accounts'
 import { Route as EvolutionGoalsRouteImport } from './routes/evolution/goals'
 import { Route as EvolutionFuelRouteImport } from './routes/evolution/fuel'
@@ -92,6 +93,11 @@ const SettingsDataPrivacyRoute = SettingsDataPrivacyRouteImport.update({
   path: '/data-privacy',
   getParentRoute: () => SettingsRoute,
 } as any)
+const SettingsCategoriesRoute = SettingsCategoriesRouteImport.update({
+  id: '/categories',
+  path: '/categories',
+  getParentRoute: () => SettingsRoute,
+} as any)
 const SettingsAccountsRoute = SettingsAccountsRouteImport.update({
   id: '/accounts',
   path: '/accounts',
@@ -126,6 +132,7 @@ export interface FileRoutesByFullPath {
   '/evolution/fuel': typeof EvolutionFuelRoute
   '/evolution/goals': typeof EvolutionGoalsRoute
   '/settings/accounts': typeof SettingsAccountsRoute
+  '/settings/categories': typeof SettingsCategoriesRoute
   '/settings/data-privacy': typeof SettingsDataPrivacyRoute
   '/settings/personal-info': typeof SettingsPersonalInfoRoute
   '/settings/vehicles': typeof SettingsVehiclesRoute
@@ -143,6 +150,7 @@ export interface FileRoutesByTo {
   '/evolution/fuel': typeof EvolutionFuelRoute
   '/evolution/goals': typeof EvolutionGoalsRoute
   '/settings/accounts': typeof SettingsAccountsRoute
+  '/settings/categories': typeof SettingsCategoriesRoute
   '/settings/data-privacy': typeof SettingsDataPrivacyRoute
   '/settings/personal-info': typeof SettingsPersonalInfoRoute
   '/settings/vehicles': typeof SettingsVehiclesRoute
@@ -163,6 +171,7 @@ export interface FileRoutesById {
   '/evolution/fuel': typeof EvolutionFuelRoute
   '/evolution/goals': typeof EvolutionGoalsRoute
   '/settings/accounts': typeof SettingsAccountsRoute
+  '/settings/categories': typeof SettingsCategoriesRoute
   '/settings/data-privacy': typeof SettingsDataPrivacyRoute
   '/settings/personal-info': typeof SettingsPersonalInfoRoute
   '/settings/vehicles': typeof SettingsVehiclesRoute
@@ -184,6 +193,7 @@ export interface FileRouteTypes {
     | '/evolution/fuel'
     | '/evolution/goals'
     | '/settings/accounts'
+    | '/settings/categories'
     | '/settings/data-privacy'
     | '/settings/personal-info'
     | '/settings/vehicles'
@@ -201,6 +211,7 @@ export interface FileRouteTypes {
     | '/evolution/fuel'
     | '/evolution/goals'
     | '/settings/accounts'
+    | '/settings/categories'
     | '/settings/data-privacy'
     | '/settings/personal-info'
     | '/settings/vehicles'
@@ -220,6 +231,7 @@ export interface FileRouteTypes {
     | '/evolution/fuel'
     | '/evolution/goals'
     | '/settings/accounts'
+    | '/settings/categories'
     | '/settings/data-privacy'
     | '/settings/personal-info'
     | '/settings/vehicles'
@@ -331,6 +343,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsDataPrivacyRouteImport
       parentRoute: typeof SettingsRoute
     }
+    '/settings/categories': {
+      id: '/settings/categories'
+      path: '/categories'
+      fullPath: '/settings/categories'
+      preLoaderRoute: typeof SettingsCategoriesRouteImport
+      parentRoute: typeof SettingsRoute
+    }
     '/settings/accounts': {
       id: '/settings/accounts'
       path: '/accounts'
@@ -382,6 +401,7 @@ const EvolutionRouteWithChildren = EvolutionRoute._addFileChildren(
 
 interface SettingsRouteChildren {
   SettingsAccountsRoute: typeof SettingsAccountsRoute
+  SettingsCategoriesRoute: typeof SettingsCategoriesRoute
   SettingsDataPrivacyRoute: typeof SettingsDataPrivacyRoute
   SettingsPersonalInfoRoute: typeof SettingsPersonalInfoRoute
   SettingsVehiclesRoute: typeof SettingsVehiclesRoute
@@ -390,6 +410,7 @@ interface SettingsRouteChildren {
 
 const SettingsRouteChildren: SettingsRouteChildren = {
   SettingsAccountsRoute: SettingsAccountsRoute,
+  SettingsCategoriesRoute: SettingsCategoriesRoute,
   SettingsDataPrivacyRoute: SettingsDataPrivacyRoute,
   SettingsPersonalInfoRoute: SettingsPersonalInfoRoute,
   SettingsVehiclesRoute: SettingsVehiclesRoute,

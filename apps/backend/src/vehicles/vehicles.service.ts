@@ -93,7 +93,13 @@ export class VehiclesService {
         vehicleId,
         transaction: { isActive: true },
       },
-      include: { transaction: true },
+      include: {
+        transaction: {
+          include: {
+            category: true,
+          },
+        },
+      },
       orderBy: [{ transaction: { date: 'desc' } }, { odometer: 'desc' }],
     });
   }

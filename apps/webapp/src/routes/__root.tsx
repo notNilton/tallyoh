@@ -69,11 +69,11 @@ function RootDocument() {
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
         <HeadContent />
       </head>
-      <body className="font-sans antialiased [overflow-wrap:anywhere] selection:bg-[rgba(79,184,178,0.24)]">
+      <body className="font-sans antialiased [overflow-wrap:anywhere] selection:bg-[rgba(79,184,178,0.24)] min-h-screen flex flex-col">
         <QueryClientProvider client={queryClient}>
           <PrivacyProvider>
             {!isAuthPage && <Header />}
-            <main>
+            <main className="flex-1">
               <Outlet />
             </main>
             {!isAuthPage && <Footer />}

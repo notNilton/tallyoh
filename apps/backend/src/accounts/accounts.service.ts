@@ -13,6 +13,9 @@ export class AccountsService {
     return this.db.account.findMany({
       where: { userId, isActive: true },
       orderBy: { name: 'asc' },
+      include: {
+        cards: { where: { isActive: true }, orderBy: { name: 'asc' } },
+      },
     });
   }
 

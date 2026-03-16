@@ -11,7 +11,7 @@ function EvolutionLayout() {
   const tabs = [
     { id: 'budgets', label: 'Orçamentos', path: '/evolution/budgets' },
     { id: 'goals', label: 'Metas', path: '/evolution/goals' },
-    { id: 'fuel', label: 'Combustível', path: '/evolution/fuel' },
+    { id: 'fuel', label: 'Resumos Veículos', path: '/evolution/fuel' },
   ];
 
   return (
@@ -23,7 +23,7 @@ function EvolutionLayout() {
             Evolução
           </h1>
           <p className="text-foreground/50 mt-1 text-xs sm:text-sm font-medium italic">
-            Planejamento e metas do seu patrimônio.
+            Planejamento, metas e resumos avançados dos seus veículos.
           </p>
         </div>
 
