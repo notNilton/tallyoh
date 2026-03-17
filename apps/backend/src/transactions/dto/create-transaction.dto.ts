@@ -48,6 +48,12 @@ export class CreateTransactionDto {
   @Max(21)
   totalInstallments?: number;
 
+  @IsNumber()
+  @IsOptional()
+  @Min(0)
+  @Max(21)
+  paidInstallments?: number;
+
   @IsDateString()
   date: Date;
 
