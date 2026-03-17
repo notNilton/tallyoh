@@ -36,6 +36,8 @@ model User {
     accounts       Account[]
     vehicles       Vehicle[]
     cards          Card[]
+    importFiles    ImportFile[]
+    importFingerprints ImportFingerprint[]
 
     @@map("users")
 }
@@ -82,6 +84,7 @@ model Account {
     statements     CreditCardStatement[]
 
     cards Card[]
+    importFiles ImportFile[]
 
     @@map("accounts")
 }
@@ -114,6 +117,9 @@ model Card {
 
     createdAt DateTime @default(now()) @map("created_at")
     updatedAt DateTime @updatedAt @map("updated_at")
+
+    transactions Transaction[]
+    importFiles ImportFile[]
 
     @@map("cards")
 }
@@ -193,12 +199,20 @@ enum TransactionClassification {
     COMMON
     FUEL
     MAINTENANCE
+    TRANSFER
 }
 
 enum TransactionStatus {
     PENDING
     COMPLETED
     CANCELED
+}
+
+enum TransactionChannel {
+    CARD_CREDIT
+    CARD_DEBIT
+    PIX
+    BANK
 }
 
 model Category {
@@ -250,6 +264,9 @@ model Transaction {
     accountId String  @map("account_id")
     account   Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
 
+    cardId String? @map("card_id")
+    card   Card?   @relation(fields: [cardId], references: [id], onDelete: SetNull)
+
     categoryId String?   @map("category_id")
     category   Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
 
@@ -267,6 +284,11 @@ model Transaction {
     currencyCode   String                    @default("BRL") @map("currency_code") @db.VarChar(3)
     classification TransactionClassification @default(COMMON)
     isRecurring    Boolean                   @default(false) @map("is_recurring")
+    channel        TransactionChannel        @default(BANK) @map("channel")
+
+    // Para cartão de CRÉDITO: não afeta saldo da conta mãe (afeta limite/dívida do cartão).
+    // Para conta normal e cartão de DÉBITO: afeta saldo normalmente.
+    affectsAccount Boolean @default(true) @map("affects_account")
 
     statementId String?              @map("statement_id")
     statement   CreditCardStatement? @relation(fields: [statementId], references: [id], onDelete: SetNull)
@@ -293,6 +315,7 @@ model Transaction {
 
     @@index([date])
     @@index([userId, date])
+    @@index([userId, cardId, date])
     @@map("transactions")
 }
 
@@ -325,6 +348,47 @@ model Installment {
     createdAt DateTime @default(now()) @map("created_at")
 
     @@map("installments")
+}
+
+model ImportFile {
+    id     String @id @default(uuid())
+    userId String @map("user_id")
+    user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    accountId String? @map("account_id")
+    account   Account? @relation(fields: [accountId], references: [id], onDelete: SetNull)
+
+    cardId String? @map("card_id")
+    card   Card?   @relation(fields: [cardId], references: [id], onDelete: SetNull)
+
+    sha256       String @db.VarChar(64)
+    filename     String? @map("filename") @db.VarChar(255)
+    sizeBytes    Int?    @map("size_bytes")
+    importedAt   DateTime @default(now()) @map("imported_at")
+
+    fingerprints ImportFingerprint[]
+
+    @@unique([userId, sha256, accountId, cardId])
+    @@index([userId, importedAt])
+    @@map("import_files")
+}
+
+model ImportFingerprint {
+    id     String @id @default(uuid())
+    userId String @map("user_id")
+    user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    importFileId String @map("import_file_id")
+    importFile   ImportFile @relation(fields: [importFileId], references: [id], onDelete: Cascade)
+
+    // hash de uma linha normalizada (transação)
+    sha256 String @db.VarChar(64)
+
+    createdAt DateTime @default(now()) @map("created_at")
+
+    @@unique([userId, sha256])
+    @@index([importFileId])
+    @@map("import_fingerprints")
 }
 
 model Budget {
