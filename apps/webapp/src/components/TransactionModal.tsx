@@ -1,22 +1,28 @@
 import { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { ArrowUpRight, ArrowDownLeft, Calendar, Lock, X, Loader2 } from 'lucide-react';
+import { X, Loader2 } from 'lucide-react';
 import { api } from '../lib/api';
-import { getBrandIcon } from '../lib/vehicle-brands';
+import { useTransactionFormState } from './useTransactionFormState';
+import { useTransactionQueries } from './useTransactionQueries';
+import { inferClassificationFromCategory } from './transaction-helpers';
+import { buildTransactionPayload } from './buildTransactionPayload';
+import { TransactionTypeToggle } from './TransactionTypeToggle';
+import { InstallmentsSection } from './InstallmentsSection';
+import { VehicleSection } from './VehicleSection';
+import { RecurringSection } from './RecurringSection';
 
-interface Category {
+export interface Category {
   id: string;
   name: string;
   icon?: string;
   type: 'INCOME' | 'EXPENSE';
 }
 
-interface Account {
+export interface Account {
   id: string;
   name: string;
 }
 
-interface Vehicle {
+export interface Vehicle {
   id: string;
   name: string;
   brand?: string;
@@ -34,7 +40,7 @@ interface TransactionModalProps {
   defaultClassification?: 'COMMON' | 'FUEL' | 'MAINTENANCE';
 }
 
-interface Transaction {
+export interface Transaction {
   id: string;
   description: string;
   amount: number | string;
@@ -70,58 +76,53 @@ export function TransactionModal({
   defaultClassification,
 }: TransactionModalProps) {
   const isEditing = mode === 'edit';
-  const fuelData = initialData?.refuelingLog;
+  const {
+    isExpense,
+    setIsExpense,
+    isRecurring,
+    setIsRecurring,
+    date,
+    setDate,
+    description,
+    setDescription,
+    amount,
+    categoryId,
+    setCategoryId,
+    accountId,
+    setAccountId,
+    totalInstallments,
+    setTotalInstallments,
+    hasPaidInstallments,
+    setHasPaidInstallments,
+    paidInstallments,
+    setPaidInstallments,
+    classification,
+    setClassification,
+    vehicleId,
+    setVehicleId,
+    currentKm,
+    liters,
+    fuelType,
+    setFuelType,
+    handleAmountChange,
+    handleKmChange,
+    handleLitersChange,
+    formattedAmount,
+    installmentValue,
+    formattedInstallment,
+    formattedKm,
+    formattedLiters,
+  } = useTransactionFormState({
+    initialData,
+    defaultVehicleId,
+    defaultClassification,
+    isOpen,
+  });
 
-  const normalize = (value: string) =>
-    value
-      .trim()
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '');
-
-  const [isExpense, setIsExpense] = useState(initialData ? initialData.type === 'EXPENSE' : true);
-  const [isRecurring, setIsRecurring] = useState(initialData?.isRecurring ?? false);
-  const [date, setDate] = useState(
-    initialData?.date
-      ? new Date(initialData.date).toISOString().split('T')[0]
-      : new Date().toISOString().split('T')[0],
-  );
-  const [description, setDescription] = useState(initialData?.description ?? '');
-  const [amount, setAmount] = useState(
-    initialData ? Math.floor(Math.abs(Number(initialData.amount)) * 100).toString() : '0',
-  );
-  const [categoryId, setCategoryId] = useState(initialData?.categoryId ?? '');
-  const [accountId, setAccountId] = useState(
-    initialData?.accountId ?? initialData?.account?.id ?? '',
-  );
-  const [totalInstallments, setTotalInstallments] = useState(1);
-  const [hasPaidInstallments, setHasPaidInstallments] = useState(false);
-  const [paidInstallments, setPaidInstallments] = useState(1);
-
-  // Fuel specific state
-  const [classification, setClassification] = useState<string>(
-    initialData?.classification ?? defaultClassification ?? 'COMMON',
-  );
-  const [vehicleId, setVehicleId] = useState(
-    fuelData?.vehicleId ?? initialData?.vehicleId ?? defaultVehicleId ?? '',
-  );
-  const [currentKm, setCurrentKm] = useState(
-    fuelData?.odometer
-      ? Math.floor(Number(fuelData.odometer)).toString()
-      : initialData?.currentKm
-        ? Math.floor(Number(initialData.currentKm)).toString()
-        : '0',
-  );
-  const [liters, setLiters] = useState(
-    fuelData?.fuelLiters
-      ? Math.floor(Number(fuelData.fuelLiters) * 1000).toString()
-      : initialData?.liters
-        ? Math.floor(Number(initialData.liters) * 1000).toString()
-        : '0',
-  );
-  const [fuelType, setFuelType] = useState(
-    fuelData?.fuelType ?? initialData?.fuelType ?? 'GASOLINA_COMUM',
-  );
+  const { filteredCategories, accounts, vehicles, vehicleFuelCategoryId } = useTransactionQueries({
+    isOpen,
+    isExpense,
+  });
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -129,161 +130,53 @@ export function TransactionModal({
   useEffect(() => {
     if (isOpen) {
       setError(null);
-      if (!initialData) setTotalInstallments(1);
     }
-  }, [isOpen, initialData]);
+  }, [isOpen]);
 
   useEffect(() => {
-    if (totalInstallments > 1) setIsRecurring(false);
-  }, [totalInstallments]);
+    const nextClassification = inferClassificationFromCategory({
+      isExpense,
+      filteredCategories,
+      categoryId,
+      currentClassification: (classification as 'COMMON' | 'FUEL' | 'MAINTENANCE') ?? 'COMMON',
+    });
 
-  const { data: categories = [] } = useQuery({
-    queryKey: ['categories'],
-    queryFn: () => api.get<Category[]>('/categories'),
-    staleTime: 1000 * 60 * 5,
-    enabled: isOpen,
-  });
-
-  const filteredCategories = categories.filter(
-    (cat) => cat.type === (isExpense ? 'EXPENSE' : 'INCOME'),
-  );
-
-  const { data: accounts = [] } = useQuery({
-    queryKey: ['accounts'],
-    queryFn: () => api.get<Account[]>('/accounts'),
-    staleTime: 1000 * 60 * 5,
-    enabled: isOpen,
-  });
-
-  useEffect(() => {
-    if (totalInstallments <= 1) {
-      setHasPaidInstallments(false);
-      setPaidInstallments(1);
-      return;
+    if (nextClassification !== classification) {
+      setClassification(nextClassification);
     }
-    setPaidInstallments((prev) => Math.min(prev, totalInstallments));
-  }, [totalInstallments]);
-
-  useEffect(() => {
-    if (!hasPaidInstallments) setPaidInstallments(1);
-  }, [hasPaidInstallments]);
-
-  const { data: vehicles = [] } = useQuery({
-    queryKey: ['vehicles'],
-    queryFn: () => api.get<Vehicle[]>('/vehicles'),
-    staleTime: 1000 * 60 * 5,
-    enabled: isOpen,
-  });
-
-  // Sincroniza classificação com categorias especiais (Veículo-Combustível / Veículo-Manutenção)
-  useEffect(() => {
-    if (!isExpense || filteredCategories.length === 0) {
-      if (classification !== 'COMMON') setClassification('COMMON');
-      return;
-    }
-
-    const currentCat = filteredCategories.find((c) => c.id === categoryId);
-    if (!currentCat) {
-      setClassification('COMMON');
-      return;
-    }
-
-    const norm = normalize(currentCat.name);
-    if (norm === 'veiculo-combustivel' || norm.includes('abastecimento')) {
-      if (classification !== 'FUEL') setClassification('FUEL');
-    } else if (norm === 'veiculo-manutencao' || norm.includes('manutencao')) {
-      if (classification !== 'MAINTENANCE') setClassification('MAINTENANCE');
-    } else if (classification !== 'COMMON') {
-      setClassification('COMMON');
-    }
-  }, [isExpense, filteredCategories, categoryId, classification]);
+  }, [isExpense, filteredCategories, categoryId, classification, setClassification]);
 
   if (!isOpen) return null;
-
-  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/\D/g, '');
-    setAmount(value);
-  };
-
-  const formattedAmount = (Number(amount) / 100).toLocaleString('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-  });
-  const amountValue = Number(amount) / 100;
-  const installmentValue = totalInstallments > 1 ? amountValue / totalInstallments : amountValue;
-  const formattedInstallment = installmentValue.toLocaleString('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-  });
-
-  // KM formatting (e.g., 160.148)
-  const handleKmChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/\D/g, '');
-    setCurrentKm(value);
-  };
-
-  const formattedKm = Number(currentKm).toLocaleString('pt-BR');
-
-  // Liters formatting (3 decimal places, e.g., 45,234)
-  const handleLitersChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/\D/g, '');
-    setLiters(value);
-  };
-
-  const formattedLiters = (Number(liters) / 1000).toLocaleString('pt-BR', {
-    minimumFractionDigits: 3,
-    maximumFractionDigits: 3,
-  });
-
-  const vehicleFuelCategoryId =
-    filteredCategories.find((c) => normalize(c.name) === 'veiculo-combustivel')?.id ?? null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
 
-    const actualAmount = Number(amount) / 100;
-    const actualLiters = Number(liters) / 1000;
-
     try {
-      const forcedCategoryIdForFuel = classification === 'FUEL' ? vehicleFuelCategoryId : null;
-
-      const payload = {
-        description:
-          classification === 'FUEL'
-            ? 'Abastecimento'
-            : classification === 'MAINTENANCE'
-              ? 'Manutenção veicular'
-              : description,
-        amount: actualAmount,
+      const { payload, transactionId } = buildTransactionPayload({
+        isEditing,
+        initialData,
+        classification: classification as 'COMMON' | 'FUEL' | 'MAINTENANCE',
+        vehicleFuelCategoryId,
+        amountInCents: Number(amount),
+        litersInMililiters: Number(liters),
         date,
-        type: isExpense ? 'EXPENSE' : 'INCOME',
-        isRecurring: classification === 'FUEL' || totalInstallments > 1 ? false : isRecurring,
-        categoryId:
-          (classification === 'FUEL' ? (forcedCategoryIdForFuel ?? categoryId) : categoryId) ||
-          undefined,
+        isExpense,
+        isRecurring,
+        totalInstallments,
+        hasPaidInstallments,
+        paidInstallments,
+        categoryId,
         accountId,
-        classification,
-        ...(!isEditing && totalInstallments > 1 && { totalInstallments }),
-        ...(!isEditing && totalInstallments > 1 && hasPaidInstallments && { paidInstallments }),
-        ...(classification === 'FUEL' && {
-          vehicleId,
-          currentKm: Number(currentKm),
-          liters: actualLiters,
-          pricePerLiter: actualLiters > 0 ? actualAmount / actualLiters : 0,
-          fuelType,
-        }),
-        ...(classification === 'MAINTENANCE' && {
-          vehicleId,
-          currentKm: Number(currentKm),
-          maintenanceType: 'OTHER',
-          provider: undefined,
-        }),
-      };
+        vehicleId,
+        currentKm: Number(currentKm),
+        fuelType,
+        description,
+      });
 
-      if (isEditing && initialData) {
-        await api.patch(`/transactions/${initialData.id}`, payload);
+      if (isEditing && transactionId) {
+        await api.patch(`/transactions/${transactionId}`, payload);
       } else {
         await api.post('/transactions', payload);
       }
@@ -306,7 +199,7 @@ export function TransactionModal({
         <div className="flex items-center justify-between mb-8">
           <div>
             <h2 className="text-xl font-bold font-display tracking-tight">
-              {isEditing ? 'Editar Lançamento' : 'Novo Lançamento'}
+              {isEditing ? 'Editar Lançamento' : 'Nova Transação'}
             </h2>
             <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest mt-1">
               {isEditing ? 'Atualize os detalhes da transação' : 'Registro de atividade financeira'}
@@ -321,33 +214,11 @@ export function TransactionModal({
         </div>
 
         <form className="flex flex-col gap-6" onSubmit={handleSubmit}>
-          {/* Expense / Income toggle */}
-          <div
-            className={`flex gap-2 p-1 bg-muted rounded-2xl ${isEditing ? 'opacity-50 cursor-not-allowed' : ''}`}
-          >
-            {isEditing && (
-              <div className="absolute -top-6 right-0 flex items-center gap-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
-                <Lock className="w-3 h-3" />
-                Bloqueado
-              </div>
-            )}
-            <button
-              type="button"
-              onClick={() => !isEditing && setIsExpense(true)}
-              className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-bold uppercase tracking-widest transition-smooth ${isExpense ? 'bg-rose-500 text-white shadow-lg shadow-rose-500/20' : 'text-muted-foreground hover:bg-muted-foreground/10'}`}
-            >
-              <ArrowDownLeft className="w-4 h-4" />
-              Despesa
-            </button>
-            <button
-              type="button"
-              onClick={() => !isEditing && setIsExpense(false)}
-              className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-bold uppercase tracking-widest transition-smooth ${!isExpense ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' : 'text-muted-foreground hover:bg-muted-foreground/10'}`}
-            >
-              <ArrowUpRight className="w-4 h-4" />
-              Receita
-            </button>
-          </div>
+          <TransactionTypeToggle
+            isEditing={isEditing}
+            isExpense={isExpense}
+            onChange={setIsExpense}
+          />
 
           <div className="grid grid-cols-2 gap-4">
             {/* Valor Total */}
@@ -367,83 +238,17 @@ export function TransactionModal({
               </div>
             </div>
 
-            {/* Parcelas */}
-            <div>
-              <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1.5 block">
-                Parcelas
-              </label>
-              <select
-                value={totalInstallments}
-                onChange={(e) => setTotalInstallments(Number(e.target.value))}
-                disabled={isEditing}
-                className="w-full bg-muted/40 border border-border rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-smooth appearance-none disabled:opacity-50"
-              >
-                {Array.from({ length: 21 }, (_, i) => i + 1).map((n) => (
-                  <option key={n} value={n}>
-                    {n === 1 ? 'À vista (1x)' : `${n}x`}
-                  </option>
-                ))}
-              </select>
-              {totalInstallments > 1 && (
-                <p className="text-[10px] font-bold text-muted-foreground mt-1.5">
-                  Valor por parcela: {formattedInstallment}
-                </p>
-              )}
-            </div>
-
-            {/* Parcelas já pagas (somente quando parcelado) */}
-            {!isEditing && totalInstallments > 1 && (
-              <div className="col-span-2 bg-muted/30 border border-border rounded-2xl p-4">
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={hasPaidInstallments}
-                    onChange={(e) => setHasPaidInstallments(e.target.checked)}
-                    className="w-4 h-4 rounded border-border text-primary focus:ring-primary/20 transition-smooth"
-                  />
-                  <div>
-                    <span className="text-xs font-bold uppercase tracking-widest">
-                      já pagou algumas parcelas?
-                    </span>
-                    <p className="text-[10px] text-muted-foreground">
-                      Marca as primeiras parcelas como pagas
-                    </p>
-                  </div>
-                </label>
-
-                {hasPaidInstallments && (
-                  <div className="mt-4 grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1.5 block">
-                        quantas parcelas?
-                      </label>
-                      <select
-                        value={paidInstallments}
-                        onChange={(e) => setPaidInstallments(Number(e.target.value))}
-                        className="w-full bg-muted/40 border border-border rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-smooth appearance-none"
-                      >
-                        {Array.from({ length: totalInstallments }, (_, i) => i + 1).map((n) => (
-                          <option key={n} value={n}>
-                            {n} de {totalInstallments}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1.5 block">
-                        valor já pago
-                      </label>
-                      <div className="w-full bg-muted/40 border border-border rounded-xl px-4 py-2.5 text-sm font-bold">
-                        {(installmentValue * paidInstallments).toLocaleString('pt-BR', {
-                          style: 'currency',
-                          currency: 'BRL',
-                        })}
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
+            <InstallmentsSection
+              isEditing={isEditing}
+              totalInstallments={totalInstallments}
+              setTotalInstallments={setTotalInstallments}
+              formattedInstallment={formattedInstallment}
+              hasPaidInstallments={hasPaidInstallments}
+              setHasPaidInstallments={setHasPaidInstallments}
+              paidInstallments={paidInstallments}
+              setPaidInstallments={setPaidInstallments}
+              installmentValue={installmentValue}
+            />
 
             {/* Date */}
             <div>
@@ -498,144 +303,29 @@ export function TransactionModal({
               </select>
             </div>
 
-            {/* Campos de veículo (combustível / manutenção) */}
-            {(isFuel || isMaintenance) && (
-              <>
-                <div className="col-span-2 grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1.5 block">
-                      Veículo
-                    </label>
-                    <div className="relative">
-                      <select
-                        required={isFuel || isMaintenance}
-                        value={vehicleId}
-                        onChange={(e) => setVehicleId(e.target.value)}
-                        className="w-full bg-muted/40 border border-border rounded-xl pl-10 pr-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 outline-none appearance-none transition-smooth"
-                      >
-                        <option value="">Selecione</option>
-                        {vehicles.map((v) => (
-                          <option key={v.id} value={v.id}>
-                            {v.name}
-                          </option>
-                        ))}
-                      </select>
-                      {vehicleId && (
-                        <div className="absolute left-3 top-1/2 -translate-y-1/2">
-                          <img
-                            src={getBrandIcon(vehicles.find((v) => v.id === vehicleId)?.brand)}
-                            className="w-4 h-4 grayscale opacity-70"
-                            alt=""
-                            onError={(e) => (e.currentTarget.style.display = 'none')}
-                          />
-                        </div>
-                      )}
-                    </div>
-                  </div>
+            <VehicleSection
+              isFuel={isFuel}
+              isMaintenance={isMaintenance}
+              vehicleId={vehicleId}
+              setVehicleId={setVehicleId}
+              vehicles={vehicles}
+              fuelType={fuelType}
+              setFuelType={setFuelType}
+              formattedKm={formattedKm}
+              handleKmChange={handleKmChange}
+              formattedLiters={formattedLiters}
+              handleLitersChange={handleLitersChange}
+              liters={liters}
+              amount={amount}
+            />
 
-                  {isFuel && (
-                    <div>
-                      <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1.5 block">
-                        Tipo de Combustível
-                      </label>
-                      <select
-                        value={fuelType}
-                        onChange={(e) => setFuelType(e.target.value)}
-                        className="w-full bg-muted/40 border border-border rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 outline-none appearance-none transition-smooth"
-                      >
-                        <option value="GASOLINA_COMUM">Gasolina Comum</option>
-                        <option value="GASOLINA_ADITIVADA">Gasolina Aditivada</option>
-                        <option value="ETANOL">Etanol</option>
-                        <option value="DIESEL">Diesel</option>
-                        <option value="GNV">GNV</option>
-                      </select>
-                    </div>
-                  )}
-
-                  <div className={isFuel ? '' : 'col-span-1'}>
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1.5 block">
-                      Odômetro (KM)
-                    </label>
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      value={formattedKm}
-                      onChange={handleKmChange}
-                      placeholder="Ex: 160.148"
-                      className="w-full bg-muted/40 border border-border rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-smooth"
-                    />
-                  </div>
-
-                  {isFuel && (
-                    <div>
-                      <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1.5 block">
-                        Litros
-                      </label>
-                      <div className="relative">
-                        <input
-                          type="text"
-                          inputMode="numeric"
-                          value={formattedLiters}
-                          onChange={handleLitersChange}
-                          placeholder="Ex: 45,234"
-                          className="w-full bg-muted/40 border border-border rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-smooth"
-                        />
-                        {Number(liters) > 0 && Number(amount) > 0 && (
-                          <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-primary">
-                            {(Number(amount) / 100 / (Number(liters) / 1000)).toLocaleString(
-                              'pt-BR',
-                              { style: 'currency', currency: 'BRL' },
-                            )}
-                            /L
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </>
-            )}
-
-            {/* Show Recurring only para despesa comum e à vista (não parcelado) */}
-            {!isFuel && totalInstallments === 1 && (
-              <div className="col-span-2 pt-1">
-                <label className="flex items-center gap-3 cursor-pointer group">
-                  <input
-                    type="checkbox"
-                    checked={isRecurring}
-                    onChange={(e) => setIsRecurring(e.target.checked)}
-                    className="w-4 h-4 rounded border-border text-primary focus:ring-primary/20 transition-smooth"
-                  />
-                  <div>
-                    <span className="text-xs font-bold uppercase tracking-widest group-hover:text-foreground transition-smooth">
-                      Lançamento Recorrente
-                    </span>
-                    <p className="text-[10px] text-muted-foreground">
-                      Repetir automaticamente todos os meses
-                    </p>
-                  </div>
-                </label>
-              </div>
-            )}
-
-            {!isFuel && isRecurring && date && (
-              <div className="col-span-2 animate-in slide-in-from-top-2 duration-200 bg-primary/5 border border-primary/10 p-3 rounded-xl flex items-center gap-3 font-medium">
-                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
-                  <Calendar className="w-4 h-4" />
-                </div>
-                <div>
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-primary">
-                    Agendamento Automático
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    Repetir todo{' '}
-                    <span className="font-bold text-foreground underline underline-offset-4 decoration-primary/30 text-sm">
-                      dia {new Date(date + 'T12:00:00').getDate()}
-                    </span>
-                  </p>
-                </div>
-              </div>
-            )}
+            <RecurringSection
+              isFuel={isFuel}
+              totalInstallments={totalInstallments}
+              isRecurring={isRecurring}
+              setIsRecurring={setIsRecurring}
+              date={date}
+            />
 
             {/* Descrição (renomeada para Observações) */}
             {!isFuel && !isMaintenance && (
