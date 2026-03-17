@@ -44,6 +44,7 @@ function TransactionsPage() {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [tab, setTab] = useState<'current' | 'past' | 'future'>('current');
   const [futureMonth, setFutureMonth] = useState<string>(''); // YYYY-MM
+  const [pastMonth, setPastMonth] = useState<string>(''); // YYYY-MM
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
   const [editingTransaction, setEditingTransaction] = useState<Tx | null>(null);
@@ -146,10 +147,26 @@ function TransactionsPage() {
   const monthLabel = new Date().toLocaleString('pt-BR', { month: 'long' });
 
   const { current: currentTransactions } = splitByToday(transactions);
-  const pastTransactions = transactions.filter((t) => {
-    const d = new Date(t.date);
-    return d >= prevMonthStart && d < monthStart;
-  });
+  const pastMonthOptions = Array.from(
+    new Set(transactions.filter((t) => new Date(t.date) < monthStart).map((t) => monthKey(t.date))),
+  )
+    .sort()
+    .reverse();
+
+  if (tab === 'past' && pastMonthOptions.length > 0 && !pastMonth) {
+    setPastMonth(pastMonthOptions[0]);
+  }
+  if (tab === 'past' && pastMonth && !pastMonthOptions.includes(pastMonth)) {
+    setPastMonth(pastMonthOptions[0] ?? '');
+  }
+
+  const pastTransactions =
+    tab === 'past' && pastMonth
+      ? transactions.filter((t) => monthKey(t.date) === pastMonth)
+      : transactions.filter((t) => {
+          const d = new Date(t.date);
+          return d >= prevMonthStart && d < monthStart;
+        });
   const { data: futureTransactions = [] } = useFutureTransactions({
     enabled: tab === 'future',
     search,
@@ -286,26 +303,26 @@ function TransactionsPage() {
       <div className="card-premium p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5">
         <div className="flex-1 min-w-0">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-              {tab === 'future'
-                ? 'Total gasto futuro'
-                : tab === 'past'
-                  ? 'Total gasto no mês passado'
-                  : 'Total gasto no mês'}
-            </p>
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                {tab === 'future'
+                  ? 'Total gasto futuro'
+                  : tab === 'past'
+                    ? 'Total gasto no mês passado'
+                    : 'Total gasto no mês'}
+              </p>
 
-            {tab === 'future' && (
-              <div className="w-full sm:w-auto">
-                <div className="flex items-center justify-center sm:justify-end">
-                  <div className="flex items-center gap-2 bg-muted/40 border border-border rounded-2xl px-3 py-2">
+              {tab === 'future' && (
+                <div className="flex items-center justify-end">
+                  <div className="inline-flex items-center gap-2 bg-muted/40 border border-border rounded-full px-3 py-1.5">
                     <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                      Mês
+                      mês
                     </span>
                     <div className="w-[1px] h-4 bg-border" />
                     <select
                       value={futureMonth}
                       onChange={(e) => setFutureMonth(e.target.value)}
-                      className="bg-transparent outline-none cursor-pointer text-sm font-semibold min-w-[170px] text-center sm:text-right"
+                      className="bg-transparent outline-none cursor-pointer text-xs font-bold min-w-[150px] text-right"
                     >
                       {futureMonthOptions.length === 0 ? (
                         <option value="">Sem transações</option>
@@ -319,19 +336,49 @@ function TransactionsPage() {
                     </select>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
+
+              {tab === 'past' && (
+                <div className="flex items-center justify-end">
+                  <div className="inline-flex items-center gap-2 bg-muted/40 border border-border rounded-full px-3 py-1.5">
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                      mês
+                    </span>
+                    <div className="w-[1px] h-4 bg-border" />
+                    <select
+                      value={pastMonth}
+                      onChange={(e) => setPastMonth(e.target.value)}
+                      className="bg-transparent outline-none cursor-pointer text-xs font-bold min-w-[150px] text-right"
+                    >
+                      {pastMonthOptions.length === 0 ? (
+                        <option value="">Sem transações</option>
+                      ) : (
+                        pastMonthOptions.map((key) => (
+                          <option key={key} value={key}>
+                            {formatMonthLabelPtBr(key)}
+                          </option>
+                        ))
+                      )}
+                    </select>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
-          <p className="text-xs text-muted-foreground mt-1">
-            {tab === 'future'
-              ? futureMonth
-                ? `Total previsto para ${formatMonthLabelPtBr(futureMonth)}`
-                : 'Somente despesas com data após hoje'
-              : tab === 'past'
-                ? `De ${prevMonthStart.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })} até ${new Date(monthStart.getTime() - 1).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}`
-                : `De ${monthStart.getDate()} ${monthLabel} até hoje`}
-          </p>
+          <div className="mt-1 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <p className="text-xs text-muted-foreground">
+              {tab === 'future'
+                ? futureMonth
+                  ? `Total previsto para ${formatMonthLabelPtBr(futureMonth)}`
+                  : 'Somente despesas com data após hoje'
+                : tab === 'past'
+                  ? pastMonth
+                    ? `Total de ${formatMonthLabelPtBr(pastMonth)}`
+                    : `De ${prevMonthStart.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })} até ${new Date(monthStart.getTime() - 1).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}`
+                  : `De ${monthStart.getDate()} ${monthLabel} até hoje`}
+            </p>
+          </div>
         </div>
 
         <PrivacyAmount
