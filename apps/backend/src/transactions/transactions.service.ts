@@ -182,6 +182,51 @@ export class TransactionsService {
     return new Date(Date.UTC(targetYear, normalizedMonth, day, 12, 0, 0, 0));
   }
 
+  private calcFaturaDueDate(
+    purchaseDate: Date,
+    closingDay: number,
+    dueDay: number,
+  ): Date {
+    const base = this.dateOnlyUtc(purchaseDate);
+    const y = base.getUTCFullYear();
+    const m = base.getUTCMonth();
+
+    // Começamos verificando a fatura do Mês Atual (M)
+    // Se a data de compra for MENOR que a data de fechamento real do Mês M, entra nela.
+    // Senão, entra na fatura do Mês M+1.
+    let faturaMonthOffset = 0;
+
+    const maxClosingDayM = this.daysInMonthUtc(y, m);
+    const actualClosingDayM = Math.min(closingDay, maxClosingDayM);
+    const closingDateM = new Date(
+      Date.UTC(y, m, actualClosingDayM, 12, 0, 0, 0),
+    );
+
+    if (base.getTime() >= closingDateM.getTime()) {
+      faturaMonthOffset = 1;
+    }
+
+    const targetFaturaMonthIndex = m + faturaMonthOffset;
+
+    // Agora decidimos o mês do vencimento dessa fatura
+    // Se dueDay <= closingDay, o vencimento só ocorre no mês SEGUINTE à fatura.
+    // Se dueDay > closingDay, o vencimento ocorre no MESMO mês da fatura.
+    const dueDateMonthOffset =
+      dueDay <= closingDay
+        ? targetFaturaMonthIndex + 1
+        : targetFaturaMonthIndex;
+
+    const targetDueYear = y + Math.floor(dueDateMonthOffset / 12);
+    const normalizedDueMonth = ((dueDateMonthOffset % 12) + 12) % 12;
+
+    const maxDueDay = this.daysInMonthUtc(targetDueYear, normalizedDueMonth);
+    const actualDueDay = Math.min(dueDay, maxDueDay);
+
+    return new Date(
+      Date.UTC(targetDueYear, normalizedDueMonth, actualDueDay, 12, 0, 0, 0),
+    );
+  }
+
   async findAll(
     userId: string,
     query: ListTransactionsQuery,
@@ -280,8 +325,18 @@ export class TransactionsService {
 
     const parts =
       totalInstallments && totalInstallments > 1 ? totalInstallments : 1;
-    const amountPerPart = Number(amount) / parts;
+    let amountPerPart = Number(amount) / parts;
+    let firstPartExtra = 0;
+
+    // Se a divisão não for exata, arredonda as parcelas e joga o resto (centavos) na 1ª parcela
+    if (parts > 1) {
+      amountPerPart = Math.floor((Number(amount) / parts) * 100) / 100;
+      firstPartExtra = Number(amount) - amountPerPart * parts;
+    }
+
     const paidParts = Math.max(0, Math.min(paidInstallments ?? 0, parts));
+
+    let firstDate = this.dateOnlyUtc(date);
 
     let resolvedAccountId = accountId;
     const resolvedCardId = cardId ?? undefined;
@@ -294,7 +349,13 @@ export class TransactionsService {
     if (resolvedCardId) {
       const card = await this.db.card.findFirst({
         where: { id: resolvedCardId, userId, isActive: true },
-        select: { id: true, type: true, accountId: true },
+        select: {
+          id: true,
+          type: true,
+          accountId: true,
+          closingDay: true,
+          dueDay: true,
+        },
       });
 
       if (!card) {
@@ -305,6 +366,14 @@ export class TransactionsService {
       resolvedChannel =
         card.type === CardType.CREDIT ? 'CARD_CREDIT' : 'CARD_DEBIT';
       affectsAccount = card.type === CardType.DEBIT;
+
+      if (resolvedChannel === 'CARD_CREDIT' && card.closingDay && card.dueDay) {
+        firstDate = this.calcFaturaDueDate(
+          firstDate,
+          card.closingDay,
+          card.dueDay,
+        );
+      }
     } else {
       // Sem `cardId`, decidimos `affectsAccount` pelo `channel`.
       affectsAccount = resolvedChannel !== 'CARD_CREDIT';
@@ -316,7 +385,6 @@ export class TransactionsService {
           `paidInstallments (${paidParts}) must be < totalInstallments (${parts})`,
         );
       }
-      const firstDate = this.dateOnlyUtc(date);
       const created = await this.db.$transaction(async (tx) => {
         const inst = await tx.installment.create({
           data: {
@@ -353,7 +421,9 @@ export class TransactionsService {
             affectsAccount,
             isRecurring: isRecurring ?? false,
             status: TransactionStatus.PENDING,
-            amount: new Prisma.Decimal(amountPerPart),
+            amount: new Prisma.Decimal(
+              amountPerPart + (isFirstCreated ? firstPartExtra : 0),
+            ),
             date: installmentDate,
             description:
               parts > 1 ? `${description} (${i}/${parts})` : description,
@@ -427,7 +497,7 @@ export class TransactionsService {
         affectsAccount,
         isRecurring: isRecurring ?? false,
         amount: new Prisma.Decimal(amount),
-        date: this.dateOnlyUtc(date),
+        date: firstDate,
         description,
         notes,
         currencyCode: currencyCode ?? 'BRL',

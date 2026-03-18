@@ -45,4 +45,12 @@ export class CreateCardDto {
   @IsString()
   @IsOptional()
   icon?: string;
+
+  @IsNumber()
+  @IsOptional()
+  closingDay?: number;
+
+  @IsNumber()
+  @IsOptional()
+  dueDay?: number;
 }

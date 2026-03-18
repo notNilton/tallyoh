@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 
 import { api } from '../lib/api';
@@ -522,8 +522,13 @@ export function useTransactionModalModel({
     if (selectedCard) setAccountId(selectedCard.accountId);
   }, [activeTab, expenseKind, creditCards, creditCardId, setAccountId]);
 
+  const prevCategoryIdRef = React.useRef(categoryId);
+
   useEffect(() => {
     if (activeTab === 'credit_card_payment') return;
+    if (prevCategoryIdRef.current === categoryId) return;
+
+    prevCategoryIdRef.current = categoryId;
 
     const nextClassification = inferClassificationFromCategory({
       isExpense,
@@ -533,10 +538,15 @@ export function useTransactionModalModel({
         classification === 'TRANSFER' ? 'COMMON' : (classification as BaseClassification),
     });
 
-    if (nextClassification !== classification) {
-      setClassification(nextClassification);
-    }
-  }, [activeTab, isExpense, filteredCategories, categoryId, classification, setClassification]);
+    setClassification(nextClassification);
+  }, [activeTab, isExpense, filteredCategories, categoryId]);
+
+  const isVehicleCategory = React.useMemo(() => {
+    const c = filteredCategories.find((cat) => cat.id === categoryId);
+    if (!c) return false;
+    const n = normalize(c.name);
+    return n === 'veiculo' || n === 'mobilidade';
+  }, [filteredCategories, categoryId]);
 
   const isFuel = classification === 'FUEL';
   const isMaintenance = classification === 'MAINTENANCE';
@@ -640,6 +650,7 @@ export function useTransactionModalModel({
     formattedInstallment,
     formattedKm,
     formattedLiters,
+    isVehicleCategory,
     // queries
     filteredCategories,
     accounts,

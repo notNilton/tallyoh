@@ -30,6 +30,8 @@ interface Card {
   type: 'CREDIT' | 'DEBIT';
   creditLimit?: number | string | null;
   color?: string | null;
+  closingDay?: number | null;
+  dueDay?: number | null;
 }
 
 interface Account {

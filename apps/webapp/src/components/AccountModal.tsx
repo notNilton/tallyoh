@@ -33,6 +33,8 @@ interface Card {
   creditLimit?: number | string | null;
   color?: string | null;
   account?: { id: string; name: string };
+  closingDay?: number | null;
+  dueDay?: number | null;
 }
 
 interface AccountModalProps {
@@ -93,6 +95,8 @@ export function AccountModal({
       : '0',
   );
   const [cardColor, setCardColor] = useState(initialCard?.color ?? '#6366f1');
+  const [closingDay, setClosingDay] = useState(initialCard?.closingDay?.toString() ?? '');
+  const [dueDay, setDueDay] = useState(initialCard?.dueDay?.toString() ?? '');
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -121,6 +125,8 @@ export function AccountModal({
           : '0',
       );
       setCardColor(initialCard?.color ?? '#6366f1');
+      setClosingDay(initialCard?.closingDay?.toString() ?? '');
+      setDueDay(initialCard?.dueDay?.toString() ?? '');
     }
   }, [isOpen, initialTab, initialAccount, initialCard, preselectedAccountId]);
 
@@ -198,6 +204,8 @@ export function AccountModal({
         type: cardType,
         color: cardColor,
         ...(cardType === 'CREDIT' && { creditLimit: Number(creditLimit) / 100 }),
+        ...(cardType === 'CREDIT' && closingDay && { closingDay: Number(closingDay) }),
+        ...(cardType === 'CREDIT' && dueDay && { dueDay: Number(dueDay) }),
       };
       if (mode === 'edit' && initialCard) {
         await api.patch(`/cards/${initialCard.id}`, payload);
@@ -391,18 +399,48 @@ export function AccountModal({
                 </div>
               </div>
               {cardType === 'CREDIT' && (
-                <div className="col-span-2">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1.5 block">
-                    Limite de Crédito
-                  </label>
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    value={formattedCreditLimit}
-                    onChange={handleCreditLimitChange}
-                    className="w-full bg-muted/40 border border-border rounded-xl px-4 py-2.5 text-sm font-bold focus:ring-2 focus:ring-primary/20 outline-none transition-smooth"
-                  />
-                </div>
+                <>
+                  <div className="col-span-2">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1.5 block">
+                      Limite de Crédito
+                    </label>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      value={formattedCreditLimit}
+                      onChange={handleCreditLimitChange}
+                      className="w-full bg-muted/40 border border-border rounded-xl px-4 py-2.5 text-sm font-bold focus:ring-2 focus:ring-primary/20 outline-none transition-smooth"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1.5 block">
+                      Dia do Fechamento
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="31"
+                      value={closingDay}
+                      onChange={(e) => setClosingDay(e.target.value)}
+                      placeholder="Ex: 5"
+                      className="w-full bg-muted/40 border border-border rounded-xl px-4 py-2.5 text-sm font-bold focus:ring-2 focus:ring-primary/20 outline-none transition-smooth"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1.5 block">
+                      Dia do Vencimento
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="31"
+                      value={dueDay}
+                      onChange={(e) => setDueDay(e.target.value)}
+                      placeholder="Ex: 12"
+                      className="w-full bg-muted/40 border border-border rounded-xl px-4 py-2.5 text-sm font-bold focus:ring-2 focus:ring-primary/20 outline-none transition-smooth"
+                    />
+                  </div>
+                </>
               )}
               <div>
                 <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1.5 block">

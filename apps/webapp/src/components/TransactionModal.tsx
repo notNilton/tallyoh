@@ -237,6 +237,9 @@ export function TransactionModal({
     setExpenseKind,
     creditCardId,
     setCreditCardId,
+    isVehicleCategory,
+    classification,
+    setClassification,
     isLoading,
     isSubmitDisabled,
     error,
@@ -351,11 +354,11 @@ export function TransactionModal({
                   disabled={isEditing}
                   placeholder="Selecione o tipo"
                   options={[
-                    { value: 'CREDIT', label: 'crédito' },
-                    { value: 'DEBIT', label: 'débito' },
-                    { value: 'PIX', label: 'pix' },
-                    { value: 'BANK', label: 'transação bancária' },
-                    { value: 'CASH', label: 'dinheiro físico' },
+                    { value: 'CREDIT', label: 'Crédito' },
+                    { value: 'DEBIT', label: 'Débito' },
+                    { value: 'PIX', label: 'Pix' },
+                    { value: 'BANK', label: 'Transação bancária' },
+                    { value: 'CASH', label: 'Dinheiro físico' },
                   ]}
                 />
               </div>
@@ -523,6 +526,28 @@ export function TransactionModal({
                         }))
                   }
                 />
+              </div>
+            )}
+
+            {/* Abastecimento Toggle */}
+            {isVehicleCategory && activeTab !== 'credit_card_payment' && (
+              <div className="sm:col-span-2 pt-2 pb-1">
+                <label className="flex items-center gap-3 cursor-pointer group w-max">
+                  <input
+                    type="checkbox"
+                    checked={classification === 'FUEL'}
+                    onChange={(e) => setClassification(e.target.checked ? 'FUEL' : 'COMMON')}
+                    className="w-4 h-4 rounded border-border text-primary focus:ring-primary/20 transition-smooth cursor-pointer"
+                  />
+                  <div>
+                    <span className="text-xs font-bold uppercase tracking-widest group-hover:text-foreground transition-smooth">
+                      Abastecimento?
+                    </span>
+                    <p className="text-[10px] text-muted-foreground">
+                      Mostra campos extras de odômetro, litros consumidos e cálculo de consumo.
+                    </p>
+                  </div>
+                </label>
               </div>
             )}
 

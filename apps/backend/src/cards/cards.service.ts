@@ -40,6 +40,8 @@ export class CardsService {
             : null,
         color: dto.color,
         icon: dto.icon,
+        closingDay: dto.closingDay,
+        dueDay: dto.dueDay,
       },
       include: { account: true },
     });
@@ -63,6 +65,8 @@ export class CardsService {
               : undefined,
         color: dto.color,
         icon: dto.icon,
+        closingDay: dto.closingDay,
+        dueDay: dto.dueDay,
       },
       include: { account: true },
     });
