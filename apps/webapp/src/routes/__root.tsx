@@ -12,7 +12,6 @@ import { TanStackDevtools } from '@tanstack/react-devtools';
 import Footer from '../components/Footer';
 import Header from '../components/Header';
 import { PrivacyProvider } from '../lib/privacy';
-import QuickAddFAB from '../components/QuickAddFAB';
 import { auth } from '../lib/auth';
 
 import appCss from '../styles.css?url';
@@ -77,7 +76,6 @@ function RootDocument() {
               <Outlet />
             </main>
             {!isAuthPage && <Footer />}
-            {!isAuthPage && <QuickAddFAB />}
 
             <TanStackDevtools
               config={{ position: 'bottom-right' }}

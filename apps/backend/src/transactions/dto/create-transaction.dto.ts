@@ -14,6 +14,7 @@ import {
 import {
   TransactionType,
   TransactionClassification,
+  TransactionChannel,
   FuelType,
   MaintenanceType,
 } from '@project-budget/database';
@@ -34,6 +35,14 @@ export class CreateTransactionDto {
   @IsEnum(TransactionClassification)
   @IsOptional()
   classification?: TransactionClassification;
+
+  @IsEnum(TransactionChannel)
+  @IsOptional()
+  channel?: TransactionChannel;
+
+  @IsUUID()
+  @IsOptional()
+  cardId?: string;
 
   @IsBoolean()
   @IsOptional()

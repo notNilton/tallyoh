@@ -460,7 +460,7 @@ function TransactionsPage() {
             <option value="all">Todas as Categorias</option>
             {categories.map((cat) => (
               <option key={cat.id} value={cat.id}>
-                {cat.icon} {cat.name}
+                {cat.description ?? cat.name}
               </option>
             ))}
           </select>
@@ -657,6 +657,30 @@ function TransactionsPage() {
                               title="Transação via PIX"
                             >
                               pix
+                            </span>
+                          ) : t.channel === 'CARD_DEBIT' ? (
+                            <span
+                              className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border"
+                              style={{
+                                backgroundColor: '#64748B15',
+                                borderColor: '#64748B35',
+                                color: '#64748B',
+                              }}
+                              title="Transação via cartão de débito"
+                            >
+                              débito
+                            </span>
+                          ) : t.channel === 'CARD_CREDIT' ? (
+                            <span
+                              className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border"
+                              style={{
+                                backgroundColor: '#64748B15',
+                                borderColor: '#64748B35',
+                                color: '#64748B',
+                              }}
+                              title="Transação via cartão de crédito"
+                            >
+                              crédito
                             </span>
                           ) : (
                             <span

@@ -1,27 +1,7 @@
 export interface Category {
   id: string;
   name: string;
-  icon?: string;
-}
-
-export interface Budget {
-  id: string;
-  categoryId?: string;
-  amountLimit: number | string;
-  spent: number;
-  month: number;
-  year: number;
-  category?: Category;
-}
-
-export interface Goal {
-  id: string;
-  name: string;
-  targetAmount: number | string;
-  currentAmount: number | string;
-  deadline?: string;
-  icon?: string;
-  color?: string;
+  description?: string;
 }
 
 export interface Vehicle {

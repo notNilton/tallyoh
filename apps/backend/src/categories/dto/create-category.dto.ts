@@ -20,7 +20,8 @@ export class CreateCategoryDto {
 
   @IsString()
   @IsOptional()
-  icon?: string;
+  @MaxLength(255)
+  description?: string;
 
   @IsString()
   @IsOptional()

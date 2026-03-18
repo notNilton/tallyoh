@@ -12,12 +12,8 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as TransactionsRouteImport } from './routes/transactions'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as RegisterRouteImport } from './routes/register'
-import { Route as MoreRouteImport } from './routes/more'
 import { Route as LoginRouteImport } from './routes/login'
-import { Route as ImportRouteImport } from './routes/import'
-import { Route as GoalsRouteImport } from './routes/goals'
 import { Route as FuelRouteImport } from './routes/fuel'
-import { Route as BudgetsRouteImport } from './routes/budgets'
 import { Route as AccountsRouteImport } from './routes/accounts'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SettingsIndexRouteImport } from './routes/settings/index'
@@ -41,34 +37,14 @@ const RegisterRoute = RegisterRouteImport.update({
   path: '/register',
   getParentRoute: () => rootRouteImport,
 } as any)
-const MoreRoute = MoreRouteImport.update({
-  id: '/more',
-  path: '/more',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ImportRoute = ImportRouteImport.update({
-  id: '/import',
-  path: '/import',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const GoalsRoute = GoalsRouteImport.update({
-  id: '/goals',
-  path: '/goals',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const FuelRoute = FuelRouteImport.update({
   id: '/fuel',
   path: '/fuel',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const BudgetsRoute = BudgetsRouteImport.update({
-  id: '/budgets',
-  path: '/budgets',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AccountsRoute = AccountsRouteImport.update({
@@ -110,12 +86,8 @@ const SettingsCategoriesRoute = SettingsCategoriesRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/accounts': typeof AccountsRoute
-  '/budgets': typeof BudgetsRoute
   '/fuel': typeof FuelRoute
-  '/goals': typeof GoalsRoute
-  '/import': typeof ImportRoute
   '/login': typeof LoginRoute
-  '/more': typeof MoreRoute
   '/register': typeof RegisterRoute
   '/settings': typeof SettingsRouteWithChildren
   '/transactions': typeof TransactionsRoute
@@ -128,12 +100,8 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/accounts': typeof AccountsRoute
-  '/budgets': typeof BudgetsRoute
   '/fuel': typeof FuelRoute
-  '/goals': typeof GoalsRoute
-  '/import': typeof ImportRoute
   '/login': typeof LoginRoute
-  '/more': typeof MoreRoute
   '/register': typeof RegisterRoute
   '/transactions': typeof TransactionsRoute
   '/settings/categories': typeof SettingsCategoriesRoute
@@ -146,12 +114,8 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/accounts': typeof AccountsRoute
-  '/budgets': typeof BudgetsRoute
   '/fuel': typeof FuelRoute
-  '/goals': typeof GoalsRoute
-  '/import': typeof ImportRoute
   '/login': typeof LoginRoute
-  '/more': typeof MoreRoute
   '/register': typeof RegisterRoute
   '/settings': typeof SettingsRouteWithChildren
   '/transactions': typeof TransactionsRoute
@@ -166,12 +130,8 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/accounts'
-    | '/budgets'
     | '/fuel'
-    | '/goals'
-    | '/import'
     | '/login'
-    | '/more'
     | '/register'
     | '/settings'
     | '/transactions'
@@ -184,12 +144,8 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/accounts'
-    | '/budgets'
     | '/fuel'
-    | '/goals'
-    | '/import'
     | '/login'
-    | '/more'
     | '/register'
     | '/transactions'
     | '/settings/categories'
@@ -201,12 +157,8 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/accounts'
-    | '/budgets'
     | '/fuel'
-    | '/goals'
-    | '/import'
     | '/login'
-    | '/more'
     | '/register'
     | '/settings'
     | '/transactions'
@@ -220,12 +172,8 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AccountsRoute: typeof AccountsRoute
-  BudgetsRoute: typeof BudgetsRoute
   FuelRoute: typeof FuelRoute
-  GoalsRoute: typeof GoalsRoute
-  ImportRoute: typeof ImportRoute
   LoginRoute: typeof LoginRoute
-  MoreRoute: typeof MoreRoute
   RegisterRoute: typeof RegisterRoute
   SettingsRoute: typeof SettingsRouteWithChildren
   TransactionsRoute: typeof TransactionsRoute
@@ -254,13 +202,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RegisterRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/more': {
-      id: '/more'
-      path: '/more'
-      fullPath: '/more'
-      preLoaderRoute: typeof MoreRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/login': {
       id: '/login'
       path: '/login'
@@ -268,32 +209,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/import': {
-      id: '/import'
-      path: '/import'
-      fullPath: '/import'
-      preLoaderRoute: typeof ImportRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/goals': {
-      id: '/goals'
-      path: '/goals'
-      fullPath: '/goals'
-      preLoaderRoute: typeof GoalsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/fuel': {
       id: '/fuel'
       path: '/fuel'
       fullPath: '/fuel'
       preLoaderRoute: typeof FuelRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/budgets': {
-      id: '/budgets'
-      path: '/budgets'
-      fullPath: '/budgets'
-      preLoaderRoute: typeof BudgetsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/accounts': {
@@ -371,12 +291,8 @@ const SettingsRouteWithChildren = SettingsRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AccountsRoute: AccountsRoute,
-  BudgetsRoute: BudgetsRoute,
   FuelRoute: FuelRoute,
-  GoalsRoute: GoalsRoute,
-  ImportRoute: ImportRoute,
   LoginRoute: LoginRoute,
-  MoreRoute: MoreRoute,
   RegisterRoute: RegisterRoute,
   SettingsRoute: SettingsRouteWithChildren,
   TransactionsRoute: TransactionsRoute,

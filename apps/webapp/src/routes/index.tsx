@@ -39,11 +39,6 @@ interface DashboardData {
     date: string;
     icon: string;
   }>;
-  budgets: Array<{
-    label: string;
-    spent: number;
-    limit: number;
-  }>;
   cashFlow: Array<{
     day: string;
     value: number;

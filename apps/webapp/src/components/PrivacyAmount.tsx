@@ -1,33 +1,25 @@
-import { usePrivacy } from '../lib/privacy';
+import type { ReactNode } from 'react';
 
 type PrivacyAmountProps = {
   value: number;
-  className?: string;
   showSign?: boolean;
+  className?: string;
+  /**
+   * Caso o usuário queira renderizar um conteúdo customizado.
+   * (mantido para compatibilidade com usos que passam `value` como ReactNode em alguns lugares)
+   */
+  children?: ReactNode;
 };
 
-export default function PrivacyAmount({
-  value,
-  className = '',
-  showSign = false,
-}: PrivacyAmountProps) {
-  const { privacyMode } = usePrivacy();
+export default function PrivacyAmount({ value, showSign, className }: PrivacyAmountProps) {
+  const num = Number(value);
+  const abs = Math.abs(num);
+  const signPrefix = showSign ? (num < 0 ? '-' : '+') : num < 0 ? '-' : '';
 
-  const formattedValue = Math.abs(value).toLocaleString('pt-BR', {
+  const formatted = abs.toLocaleString('pt-BR', {
     style: 'currency',
     currency: 'BRL',
   });
 
-  const sign = showSign ? (value > 0 ? '+ ' : value < 0 ? '- ' : '') : '';
-
-  return (
-    <span
-      className={`${className} transition-all duration-300 ${
-        privacyMode ? 'blur-md select-none opacity-60' : ''
-      }`}
-    >
-      {sign}
-      {formattedValue}
-    </span>
-  );
+  return <span className={className}>{`${signPrefix}${formatted}`}</span>;
 }

@@ -51,22 +51,7 @@ export default function Header() {
             <Activity className="w-4 h-4" />
             Transações
           </Link>
-          {/* <Link
-            to="/budgets"
-            className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-bold text-muted-foreground hover:text-foreground hover:bg-accent transition-smooth"
-            activeProps={{ className: 'text-foreground bg-accent' }}
-          >
-            <Zap className="w-4 h-4" />
-            Orçamentos
-          </Link>
-          <Link
-            to="/goals"
-            className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-bold text-muted-foreground hover:text-foreground hover:bg-accent transition-smooth"
-            activeProps={{ className: 'text-foreground bg-accent' }}
-          >
-            <Target className="w-4 h-4" />
-            Metas
-          </Link> */}
+          {/* Orçamentos/Metas removidos (Budget/Goal) */}
           <Link
             to="/accounts"
             className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-bold text-muted-foreground hover:text-foreground hover:bg-accent transition-smooth"

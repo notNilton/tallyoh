@@ -18,7 +18,19 @@ function normalize(value: string) {
     .replace(/[\u0300-\u036f]/g, '');
 }
 
-type Classification = 'COMMON' | 'FUEL' | 'MAINTENANCE';
+type BaseClassification = 'COMMON' | 'FUEL' | 'MAINTENANCE';
+type Classification = BaseClassification | 'TRANSFER';
+
+type TransactionModalTab = 'expense' | 'income' | 'credit_card_payment';
+
+type ExpenseKind = 'CREDIT' | 'DEBIT' | 'PIX' | 'BANK' | 'CASH';
+
+function expenseKindToChannel(kind: ExpenseKind) {
+  if (kind === 'CREDIT') return 'CARD_CREDIT';
+  if (kind === 'DEBIT') return 'CARD_DEBIT';
+  if (kind === 'PIX') return 'PIX';
+  return 'BANK';
+}
 
 function inferClassificationFromCategory({
   isExpense,
@@ -29,8 +41,8 @@ function inferClassificationFromCategory({
   isExpense: boolean;
   filteredCategories: Category[];
   categoryId: string;
-  currentClassification: Classification;
-}): Classification {
+  currentClassification: BaseClassification;
+}): BaseClassification {
   if (!isExpense || filteredCategories.length === 0) {
     return 'COMMON';
   }
@@ -58,6 +70,8 @@ function buildTransactionPayload({
   initialData,
   classification,
   vehicleFuelCategoryId,
+  expenseKind,
+  creditCardId,
   amountInCents,
   litersInMililiters,
   date,
@@ -77,6 +91,8 @@ function buildTransactionPayload({
   initialData?: Transaction | null;
   classification: Classification;
   vehicleFuelCategoryId: string | null;
+  expenseKind: ExpenseKind;
+  creditCardId: string;
   amountInCents: number;
   litersInMililiters: number;
   date: string;
@@ -96,6 +112,7 @@ function buildTransactionPayload({
   const actualLiters = litersInMililiters / 1000;
 
   const forcedCategoryIdForFuel = classification === 'FUEL' ? vehicleFuelCategoryId : null;
+  const channel = expenseKindToChannel(expenseKind);
 
   const payload = {
     description:
@@ -112,7 +129,9 @@ function buildTransactionPayload({
       (classification === 'FUEL' ? (forcedCategoryIdForFuel ?? categoryId) : categoryId) ||
       undefined,
     accountId,
+    channel,
     classification,
+    ...(expenseKind === 'CREDIT' && creditCardId ? { cardId: creditCardId } : {}),
     ...(!isEditing && totalInstallments > 1 && { totalInstallments }),
     ...(!isEditing && totalInstallments > 1 && hasPaidInstallments && { paidInstallments }),
     ...(classification === 'FUEL' && {
@@ -358,6 +377,23 @@ export function useTransactionModalModel({
 }: TransactionModalProps) {
   const isEditing = mode === 'edit';
 
+  const [activeTab, setActiveTab] = useState<TransactionModalTab>(() => {
+    if (initialData?.classification === 'TRANSFER') return 'credit_card_payment';
+    if (initialData?.type === 'EXPENSE') return 'expense';
+    return 'income';
+  });
+
+  const [expenseKind, setExpenseKind] = useState<ExpenseKind>(() => {
+    const channel = initialData?.channel;
+    if (channel === 'CARD_CREDIT') return 'CREDIT';
+    if (channel === 'CARD_DEBIT') return 'DEBIT';
+    if (channel === 'PIX') return 'PIX';
+    if (channel === 'BANK') return 'BANK';
+    return 'BANK';
+  });
+
+  const [creditCardId, setCreditCardId] = useState<string>(() => initialData?.cardId ?? '');
+
   const form = useTransactionModalFormState({
     initialData,
     defaultVehicleId,
@@ -419,20 +455,90 @@ export function useTransactionModalModel({
   }, [isOpen]);
 
   useEffect(() => {
+    if (activeTab === 'credit_card_payment') {
+      setIsExpense(true);
+      setIsRecurring(false);
+      setTotalInstallments(1);
+      setHasPaidInstallments(false);
+      setPaidInstallments(1);
+      setCategoryId('');
+      setClassification('TRANSFER');
+      setDescription((prev) => (prev.trim().length ? prev : 'Pagamento de fatura'));
+      setExpenseKind('BANK');
+      setCreditCardId('');
+      return;
+    }
+
+    setIsExpense(activeTab === 'expense');
+    // Receita não suporta parcelamento; sempre fixa em 1
+    setTotalInstallments(1);
+    setIsRecurring(false);
+    setHasPaidInstallments(false);
+    setPaidInstallments(1);
+    if (activeTab !== 'expense') {
+      setExpenseKind('BANK');
+      setCreditCardId('');
+    }
+    setClassification((prev) =>
+      prev === 'TRANSFER' ? ((defaultClassification ?? 'COMMON') as BaseClassification) : prev,
+    );
+  }, [
+    activeTab,
+    setIsExpense,
+    setIsRecurring,
+    setHasPaidInstallments,
+    setPaidInstallments,
+    setCategoryId,
+    setClassification,
+    setDescription,
+    defaultClassification,
+  ]);
+
+  useEffect(() => {
+    if (activeTab !== 'expense') return;
+
+    if (expenseKind !== 'CREDIT') {
+      setTotalInstallments(1);
+      setHasPaidInstallments(false);
+      setPaidInstallments(1);
+      setCreditCardId('');
+    }
+  }, [
+    activeTab,
+    expenseKind,
+    setTotalInstallments,
+    setHasPaidInstallments,
+    setPaidInstallments,
+    setCreditCardId,
+  ]);
+
+  const creditCards = accounts.flatMap((a) => a.cards ?? []).filter((c) => c.type === 'CREDIT');
+
+  useEffect(() => {
+    if (activeTab !== 'expense' || expenseKind !== 'CREDIT') return;
+    const selectedCard = creditCards.find((c) => c.id === creditCardId);
+    if (selectedCard) setAccountId(selectedCard.accountId);
+  }, [activeTab, expenseKind, creditCards, creditCardId, setAccountId]);
+
+  useEffect(() => {
+    if (activeTab === 'credit_card_payment') return;
+
     const nextClassification = inferClassificationFromCategory({
       isExpense,
       filteredCategories,
       categoryId,
-      currentClassification: (classification as Classification) ?? 'COMMON',
+      currentClassification:
+        classification === 'TRANSFER' ? 'COMMON' : (classification as BaseClassification),
     });
 
     if (nextClassification !== classification) {
       setClassification(nextClassification);
     }
-  }, [isExpense, filteredCategories, categoryId, classification, setClassification]);
+  }, [activeTab, isExpense, filteredCategories, categoryId, classification, setClassification]);
 
   const isFuel = classification === 'FUEL';
   const isMaintenance = classification === 'MAINTENANCE';
+  const creditCardAccounts = accounts.filter((a) => a.type === 'CREDIT_CARD');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -445,6 +551,8 @@ export function useTransactionModalModel({
         initialData,
         classification: classification as Classification,
         vehicleFuelCategoryId,
+        expenseKind,
+        creditCardId,
         amountInCents: Number(amount),
         litersInMililiters: Number(liters),
         date,
@@ -481,6 +589,12 @@ export function useTransactionModalModel({
     isEditing,
     isFuel,
     isMaintenance,
+    activeTab,
+    expenseKind,
+    setExpenseKind,
+    creditCardId,
+    setCreditCardId,
+    creditCards,
     // form state
     isExpense,
     setIsExpense,
@@ -521,6 +635,8 @@ export function useTransactionModalModel({
     // queries
     filteredCategories,
     accounts,
+    creditCardAccounts,
+    setActiveTab,
     vehicles,
     // submission
     isLoading,

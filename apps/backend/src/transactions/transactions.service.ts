@@ -10,6 +10,7 @@ import {
   Transaction,
   Prisma,
   TransactionStatus,
+  TransactionChannel,
 } from '@project-budget/database';
 import { createHash } from 'crypto';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
@@ -257,6 +258,8 @@ export class TransactionsService {
       categoryId,
       type,
       classification,
+      channel,
+      cardId,
       isRecurring,
       amount,
       totalInstallments,
@@ -279,6 +282,33 @@ export class TransactionsService {
       totalInstallments && totalInstallments > 1 ? totalInstallments : 1;
     const amountPerPart = Number(amount) / parts;
     const paidParts = Math.max(0, Math.min(paidInstallments ?? 0, parts));
+
+    let resolvedAccountId = accountId;
+    const resolvedCardId = cardId ?? undefined;
+    let resolvedChannel: TransactionChannel = (channel ??
+      'BANK') as TransactionChannel;
+    let affectsAccount = resolvedChannel !== 'CARD_CREDIT';
+
+    // Para transações ligadas a cartão, o `cardId` determina `channel` e `affectsAccount`
+    // (CREDIT não afeta saldo; DEBIT afeta).
+    if (resolvedCardId) {
+      const card = await this.db.card.findFirst({
+        where: { id: resolvedCardId, userId, isActive: true },
+        select: { id: true, type: true, accountId: true },
+      });
+
+      if (!card) {
+        throw new BadRequestException('cardId inválido para este usuário');
+      }
+
+      resolvedAccountId = card.accountId;
+      resolvedChannel =
+        card.type === CardType.CREDIT ? 'CARD_CREDIT' : 'CARD_DEBIT';
+      affectsAccount = card.type === CardType.DEBIT;
+    } else {
+      // Sem `cardId`, decidimos `affectsAccount` pelo `channel`.
+      affectsAccount = resolvedChannel !== 'CARD_CREDIT';
+    }
 
     if (parts > 1) {
       if (paidParts >= parts) {
@@ -312,10 +342,15 @@ export class TransactionsService {
           const isFirstCreated = i === startPart;
           const txData = {
             user: { connect: { id: userId } },
-            account: { connect: { id: accountId } },
+            account: { connect: { id: resolvedAccountId } },
             category: categoryId ? { connect: { id: categoryId } } : undefined,
             type,
             classification: classification ?? 'COMMON',
+            channel: resolvedChannel,
+            card: resolvedCardId
+              ? { connect: { id: resolvedCardId } }
+              : undefined,
+            affectsAccount,
             isRecurring: isRecurring ?? false,
             status: TransactionStatus.PENDING,
             amount: new Prisma.Decimal(amountPerPart),
@@ -383,10 +418,13 @@ export class TransactionsService {
     return this.db.transaction.create({
       data: {
         userId,
-        accountId,
+        accountId: resolvedAccountId,
         categoryId,
         type,
         classification: classification ?? 'COMMON',
+        channel: resolvedChannel,
+        cardId: resolvedCardId,
+        affectsAccount,
         isRecurring: isRecurring ?? false,
         amount: new Prisma.Decimal(amount),
         date: this.dateOnlyUtc(date),
@@ -451,10 +489,34 @@ export class TransactionsService {
       classification,
       amount,
       date,
+      channel,
+      cardId,
       ...rest
     } = dto;
 
     await this.findOne(id, userId);
+
+    let resolvedAccountId = accountId;
+    let resolvedChannel: TransactionChannel | undefined = channel;
+    let affectsAccount: boolean | undefined;
+
+    if (cardId) {
+      const card = await this.db.card.findFirst({
+        where: { id: cardId, userId, isActive: true },
+        select: { type: true, accountId: true },
+      });
+
+      if (!card) {
+        throw new BadRequestException('cardId inválido para este usuário');
+      }
+
+      resolvedAccountId = card.accountId;
+      resolvedChannel =
+        card.type === CardType.CREDIT ? 'CARD_CREDIT' : 'CARD_DEBIT';
+      affectsAccount = card.type === CardType.DEBIT;
+    } else if (resolvedChannel) {
+      affectsAccount = resolvedChannel !== 'CARD_CREDIT';
+    }
 
     return this.db.transaction.update({
       where: { id },
@@ -463,7 +525,12 @@ export class TransactionsService {
         classification,
         amount: amount ? new Prisma.Decimal(amount) : undefined,
         date: date ? new Date(date) : undefined,
-        account: accountId ? { connect: { id: accountId } } : undefined,
+        ...(resolvedChannel ? { channel: resolvedChannel } : {}),
+        ...(cardId ? { card: { connect: { id: cardId } } } : {}),
+        ...(typeof affectsAccount === 'boolean' ? { affectsAccount } : {}),
+        account: resolvedAccountId
+          ? { connect: { id: resolvedAccountId } }
+          : undefined,
         category: categoryId ? { connect: { id: categoryId } } : undefined,
         refuelingLog:
           classification === 'FUEL' && vehicleId

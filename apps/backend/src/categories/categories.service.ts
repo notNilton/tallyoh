@@ -32,7 +32,7 @@ export class CategoriesService {
         userId,
         name: dto.name,
         type: dto.type,
-        icon: dto.icon,
+        description: dto.description,
         color: dto.color,
         parentId: dto.parentId,
       },

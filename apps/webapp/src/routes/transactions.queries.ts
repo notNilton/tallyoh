@@ -4,7 +4,7 @@ import { api } from '../lib/api';
 export interface TxCategory {
   id: string;
   name: string;
-  icon?: string;
+  description?: string;
   type: 'INCOME' | 'EXPENSE';
 }
 

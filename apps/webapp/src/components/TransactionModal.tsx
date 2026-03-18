@@ -1,17 +1,24 @@
-import { ArrowDownLeft, ArrowUpRight, Calendar, Lock, Loader2, X } from 'lucide-react';
+import { ArrowDownLeft, ArrowUpRight, Calendar, CreditCard, Lock, Loader2, X } from 'lucide-react';
 import { getBrandIcon } from '../lib/vehicle-brands';
 import { useTransactionModalModel } from './TransactionModal.queries';
 
 export interface Category {
   id: string;
   name: string;
-  icon?: string;
+  description?: string;
   type: 'INCOME' | 'EXPENSE';
 }
 
 export interface Account {
   id: string;
   name: string;
+  type?: 'CHECKING' | 'SAVINGS' | 'CREDIT_CARD' | 'CASH' | 'WALLET' | 'INVESTMENT';
+  cards?: Array<{
+    id: string;
+    accountId: string;
+    name: string;
+    type: 'CREDIT' | 'DEBIT';
+  }>;
 }
 
 export interface Vehicle {
@@ -30,6 +37,8 @@ export interface Transaction {
   isRecurring?: boolean;
   categoryId?: string;
   accountId?: string;
+  cardId?: string;
+  channel?: string;
   category?: Category;
   account?: Account;
   vehicleId?: string;
@@ -83,8 +92,9 @@ export function TransactionModal({
     isEditing,
     isFuel,
     isMaintenance,
+    activeTab,
     isExpense,
-    setIsExpense,
+    setActiveTab,
     isRecurring,
     setIsRecurring,
     date,
@@ -117,7 +127,12 @@ export function TransactionModal({
     formattedLiters,
     filteredCategories,
     accounts,
+    creditCards,
     vehicles,
+    expenseKind,
+    setExpenseKind,
+    creditCardId,
+    setCreditCardId,
     isLoading,
     error,
     handleSubmit,
@@ -145,7 +160,7 @@ export function TransactionModal({
 
         <form className="flex flex-col gap-6" onSubmit={handleSubmit}>
           <div
-            className={`relative flex gap-2 p-1 bg-muted rounded-2xl ${
+            className={`relative grid grid-cols-3 gap-2 p-1 bg-muted rounded-2xl ${
               isEditing ? 'opacity-50 cursor-not-allowed' : ''
             }`}
           >
@@ -157,27 +172,39 @@ export function TransactionModal({
             )}
             <button
               type="button"
-              onClick={() => !isEditing && setIsExpense(true)}
-              className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-bold uppercase tracking-widest transition-smooth ${
-                isExpense
+              onClick={() => !isEditing && setActiveTab('expense')}
+              className={`w-full min-w-0 flex items-center justify-center gap-2 py-3 rounded-xl text-[10px] sm:text-xs font-bold uppercase tracking-widest transition-smooth ${
+                activeTab === 'expense'
                   ? 'bg-rose-500 text-white shadow-lg shadow-rose-500/20'
                   : 'text-muted-foreground hover:bg-muted-foreground/10'
               }`}
             >
               <ArrowDownLeft className="w-4 h-4" />
-              Despesa
+              <span className="truncate">Despesa</span>
             </button>
             <button
               type="button"
-              onClick={() => !isEditing && setIsExpense(false)}
-              className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-bold uppercase tracking-widest transition-smooth ${
-                !isExpense
+              onClick={() => !isEditing && setActiveTab('income')}
+              className={`w-full min-w-0 flex items-center justify-center gap-2 py-3 rounded-xl text-[10px] sm:text-xs font-bold uppercase tracking-widest transition-smooth ${
+                activeTab === 'income'
                   ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20'
                   : 'text-muted-foreground hover:bg-muted-foreground/10'
               }`}
             >
               <ArrowUpRight className="w-4 h-4" />
-              Receita
+              <span className="truncate">Receita</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => !isEditing && setActiveTab('credit_card_payment')}
+              className={`w-full min-w-0 flex items-center justify-center gap-2 py-3 rounded-xl text-[10px] sm:text-xs font-bold uppercase tracking-widest transition-smooth ${
+                activeTab === 'credit_card_payment'
+                  ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/20'
+                  : 'text-muted-foreground hover:bg-muted-foreground/10'
+              }`}
+            >
+              <CreditCard className="w-4 h-4" />
+              Fatura
             </button>
           </div>
 
@@ -185,7 +212,7 @@ export function TransactionModal({
             {/* Valor Total */}
             <div>
               <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1.5 block">
-                Valor Total
+                {activeTab === 'credit_card_payment' ? 'Valor total a pagar' : 'Valor Total'}
               </label>
               <div className="relative">
                 <input
@@ -194,89 +221,39 @@ export function TransactionModal({
                   inputMode="numeric"
                   value={formattedAmount}
                   onChange={handleAmountChange}
-                  className={`w-full bg-muted/40 border border-border rounded-xl px-4 py-2.5 text-sm font-bold focus:ring-2 outline-none transition-smooth ${isExpense ? 'text-rose-500 focus:ring-rose-500/20' : 'text-emerald-500 focus:ring-emerald-500/20'}`}
+                  className={`w-full bg-muted/40 border border-border rounded-xl px-4 py-2.5 text-sm font-bold focus:ring-2 outline-none transition-smooth ${
+                    activeTab === 'credit_card_payment'
+                      ? 'text-primary focus:ring-primary/20'
+                      : isExpense
+                        ? 'text-rose-500 focus:ring-rose-500/20'
+                        : 'text-emerald-500 focus:ring-emerald-500/20'
+                  }`}
                 />
               </div>
             </div>
 
-            {/* Parcelas */}
-            <>
+            {/* Tipo de despesa */}
+            {activeTab === 'expense' && (
               <div>
                 <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1.5 block">
-                  Parcelas
+                  Tipo de despesa
                 </label>
                 <select
-                  value={totalInstallments}
-                  onChange={(e) => setTotalInstallments(Number(e.target.value))}
+                  value={expenseKind}
+                  onChange={(e) =>
+                    setExpenseKind(e.target.value as 'CREDIT' | 'DEBIT' | 'PIX' | 'BANK' | 'CASH')
+                  }
                   disabled={isEditing}
                   className="w-full bg-muted/40 border border-border rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-smooth appearance-none disabled:opacity-50"
                 >
-                  {Array.from({ length: 21 }, (_, i) => i + 1).map((n) => (
-                    <option key={n} value={n}>
-                      {n === 1 ? 'À vista (1x)' : `${n}x`}
-                    </option>
-                  ))}
+                  <option value="CREDIT">crédito</option>
+                  <option value="DEBIT">débito</option>
+                  <option value="PIX">pix</option>
+                  <option value="BANK">transação bancária</option>
+                  <option value="CASH">dinheiro físico</option>
                 </select>
-                {totalInstallments > 1 && (
-                  <p className="text-[10px] font-bold text-muted-foreground mt-1.5">
-                    Valor por parcela: {formattedInstallment}
-                  </p>
-                )}
               </div>
-
-              {!isEditing && totalInstallments > 1 && (
-                <div className="col-span-2 bg-muted/30 border border-border rounded-2xl p-4">
-                  <label className="flex items-center gap-3 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={hasPaidInstallments}
-                      onChange={(e) => setHasPaidInstallments(e.target.checked)}
-                      className="w-4 h-4 rounded border-border text-primary focus:ring-primary/20 transition-smooth"
-                    />
-                    <div>
-                      <span className="text-xs font-bold uppercase tracking-widest">
-                        já pagou algumas parcelas?
-                      </span>
-                      <p className="text-[10px] text-muted-foreground">
-                        Marca as primeiras parcelas como pagas
-                      </p>
-                    </div>
-                  </label>
-
-                  {hasPaidInstallments && (
-                    <div className="mt-4 grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1.5 block">
-                          quantas parcelas?
-                        </label>
-                        <select
-                          value={paidInstallments}
-                          onChange={(e) => setPaidInstallments(Number(e.target.value))}
-                          className="w-full bg-muted/40 border border-border rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-smooth appearance-none"
-                        >
-                          {Array.from({ length: totalInstallments }, (_, i) => i + 1).map((n) => (
-                            <option key={n} value={n}>
-                              {n} de {totalInstallments}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                      <div>
-                        <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1.5 block">
-                          valor já pago
-                        </label>
-                        <div className="w-full bg-muted/40 border border-border rounded-xl px-4 py-2.5 text-sm font-bold">
-                          {(installmentValue * paidInstallments).toLocaleString('pt-BR', {
-                            style: 'currency',
-                            currency: 'BRL',
-                          })}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-            </>
+            )}
 
             {/* Date */}
             <div>
@@ -293,43 +270,153 @@ export function TransactionModal({
             </div>
 
             {/* Category */}
-            <div>
-              <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1.5 block">
-                Categoria
-              </label>
-              <select
-                value={categoryId}
-                onChange={(e) => setCategoryId(e.target.value)}
-                className="w-full bg-muted/40 border border-border rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-smooth appearance-none"
-              >
-                <option value="">Sem categoria</option>
-                {filteredCategories.map((cat) => (
-                  <option key={cat.id} value={cat.id}>
-                    {cat.icon} {cat.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+            {activeTab !== 'credit_card_payment' && (
+              <div>
+                <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1.5 block">
+                  Categoria
+                </label>
+                <select
+                  value={categoryId}
+                  onChange={(e) => setCategoryId(e.target.value)}
+                  className="w-full bg-muted/40 border border-border rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-smooth appearance-none"
+                >
+                  <option value="">Sem categoria</option>
+                  {filteredCategories.map((cat) => (
+                    <option key={cat.id} value={cat.id}>
+                      {cat.description ?? cat.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {/* Parcelas + cartão (somente crédito) */}
+            {activeTab === 'expense' && expenseKind === 'CREDIT' && (
+              <div className="col-span-2 bg-muted/30 border border-border rounded-2xl p-4">
+                <div>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1.5 block">
+                    Parcelas
+                  </label>
+                  <select
+                    value={totalInstallments}
+                    onChange={(e) => setTotalInstallments(Number(e.target.value))}
+                    disabled={isEditing}
+                    className="w-full bg-muted/40 border border-border rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-smooth appearance-none disabled:opacity-50"
+                  >
+                    {Array.from({ length: 21 }, (_, i) => i + 1).map((n) => (
+                      <option key={n} value={n}>
+                        {n === 1 ? 'À vista (1x)' : `${n}x`}
+                      </option>
+                    ))}
+                  </select>
+                  {totalInstallments > 1 && (
+                    <p className="text-[10px] font-bold text-muted-foreground mt-1.5">
+                      Valor por parcela: {formattedInstallment}
+                    </p>
+                  )}
+                </div>
+
+                {!isEditing && totalInstallments > 1 && (
+                  <div className="mt-4">
+                    <label className="flex items-center gap-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={hasPaidInstallments}
+                        onChange={(e) => setHasPaidInstallments(e.target.checked)}
+                        className="w-4 h-4 rounded border-border text-primary focus:ring-primary/20 transition-smooth"
+                      />
+                      <div>
+                        <span className="text-xs font-bold uppercase tracking-widest">
+                          já pagou algumas parcelas?
+                        </span>
+                        <p className="text-[10px] text-muted-foreground">
+                          Marca as primeiras parcelas como pagas
+                        </p>
+                      </div>
+                    </label>
+
+                    {hasPaidInstallments && (
+                      <div className="mt-4 grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1.5 block">
+                            quantas parcelas?
+                          </label>
+                          <select
+                            value={paidInstallments}
+                            onChange={(e) => setPaidInstallments(Number(e.target.value))}
+                            className="w-full bg-muted/40 border border-border rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-smooth appearance-none"
+                          >
+                            {Array.from({ length: totalInstallments }, (_, i) => i + 1).map((n) => (
+                              <option key={n} value={n}>
+                                {n} de {totalInstallments}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1.5 block">
+                            valor já pago
+                          </label>
+                          <div className="w-full bg-muted/40 border border-border rounded-xl px-4 py-2.5 text-sm font-bold">
+                            {(installmentValue * paidInstallments).toLocaleString('pt-BR', {
+                              style: 'currency',
+                              currency: 'BRL',
+                            })}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                <div className="mt-4">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1.5 block">
+                    Cartão de crédito
+                  </label>
+                  <select
+                    required
+                    value={creditCardId}
+                    onChange={(e) => {
+                      const nextId = e.target.value;
+                      setCreditCardId(nextId);
+                      const nextCard = creditCards.find((c) => c.id === nextId);
+                      if (nextCard) setAccountId(nextCard.accountId);
+                    }}
+                    className="w-full bg-muted/40 border border-border rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-smooth appearance-none"
+                  >
+                    <option value="">Selecione um cartão</option>
+                    {creditCards.map((card) => (
+                      <option key={card.id} value={card.id}>
+                        {card.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            )}
 
             {/* Account */}
-            <div className="col-span-1">
-              <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1.5 block">
-                Pagamento via
-              </label>
-              <select
-                required
-                value={accountId}
-                onChange={(e) => setAccountId(e.target.value)}
-                className="w-full bg-muted/40 border border-border rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-smooth appearance-none"
-              >
-                <option value="">Selecione uma conta</option>
-                {accounts.map((acc) => (
-                  <option key={acc.id} value={acc.id}>
-                    {acc.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+            {activeTab !== 'credit_card_payment' &&
+              !(activeTab === 'expense' && expenseKind === 'CREDIT') && (
+                <div className="col-span-1">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1.5 block">
+                    Pagamento via
+                  </label>
+                  <select
+                    required
+                    value={accountId}
+                    onChange={(e) => setAccountId(e.target.value)}
+                    className="w-full bg-muted/40 border border-border rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-smooth appearance-none"
+                  >
+                    <option value="">Selecione uma conta</option>
+                    {accounts.map((acc) => (
+                      <option key={acc.id} value={acc.id}>
+                        {acc.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
             {/* Veículo + combustível (para FUEL/MAINTENANCE) */}
             {!isFuel && !isMaintenance ? null : (
@@ -431,7 +518,7 @@ export function TransactionModal({
             )}
 
             {/* Recorrência (apenas para COMMON) */}
-            {isFuel ? null : (
+            {activeTab === 'credit_card_payment' || isFuel ? null : (
               <>
                 {totalInstallments === 1 && (
                   <div className="col-span-2 pt-1">
@@ -476,7 +563,7 @@ export function TransactionModal({
             )}
 
             {/* Descrição (renomeada para Observações) */}
-            {!isFuel && !isMaintenance && (
+            {!isFuel && !isMaintenance && activeTab !== 'credit_card_payment' && (
               <div className="col-span-2">
                 <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1.5 block">
                   Observações
@@ -509,7 +596,13 @@ export function TransactionModal({
             <button
               type="submit"
               disabled={isLoading}
-              className={`flex-[3] flex items-center justify-center gap-2 px-6 py-3 rounded-2xl text-white font-bold text-sm shadow-lg transition-smooth hover:scale-[1.02] active:scale-95 disabled:opacity-60 disabled:scale-100 ${isExpense ? 'bg-rose-500 shadow-rose-500/20' : 'bg-emerald-500 shadow-emerald-500/20'}`}
+              className={`flex-[3] flex items-center justify-center gap-2 px-6 py-3 rounded-2xl text-white font-bold text-sm shadow-lg transition-smooth hover:scale-[1.02] active:scale-95 disabled:opacity-60 disabled:scale-100 ${
+                activeTab === 'credit_card_payment'
+                  ? 'bg-primary shadow-primary/20'
+                  : isExpense
+                    ? 'bg-rose-500 shadow-rose-500/20'
+                    : 'bg-emerald-500 shadow-emerald-500/20'
+              }`}
             >
               {isLoading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -517,7 +610,9 @@ export function TransactionModal({
                 <>
                   {isEditing
                     ? 'Salvar Alterações'
-                    : `Confirmar ${isFuel ? 'Abastecimento' : isExpense ? 'Despesa' : 'Receita'}`}
+                    : activeTab === 'credit_card_payment'
+                      ? 'Confirmar Pagamento da Fatura'
+                      : `Confirmar ${isFuel ? 'Abastecimento' : isExpense ? 'Despesa' : 'Receita'}`}
                 </>
               )}
             </button>

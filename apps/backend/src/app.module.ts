@@ -7,8 +7,6 @@ import { UsersModule } from './users/users.module';
 import { AccountsModule } from './accounts/accounts.module';
 import { TransactionsModule } from './transactions/transactions.module';
 import { CategoriesModule } from './categories/categories.module';
-import { BudgetsModule } from './budgets/budgets.module';
-import { GoalsModule } from './goals/goals.module';
 import { AuthModule } from './auth/auth.module';
 import { VehiclesModule } from './vehicles/vehicles.module';
 import { DashboardModule } from './dashboard/dashboard.module';
@@ -24,8 +22,6 @@ import { CardsModule } from './cards/cards.module';
     AccountsModule,
     TransactionsModule,
     CategoriesModule,
-    BudgetsModule,
-    GoalsModule,
     AuthModule,
     VehiclesModule,
     DashboardModule,

@@ -8,7 +8,7 @@ import { CategoryModal } from '../../components/CategoryModal';
 interface Category {
   id: string;
   name: string;
-  icon?: string;
+  description?: string;
   type: 'INCOME' | 'EXPENSE';
   color?: string;
 }
@@ -39,7 +39,7 @@ function CategoriesSettingsPage() {
           c.type === 'INCOME' &&
           (!normalizedSearch ||
             c.name.toLowerCase().includes(normalizedSearch) ||
-            (c.icon ?? '').toLowerCase().includes(normalizedSearch)),
+            (c.description ?? '').toLowerCase().includes(normalizedSearch)),
       ),
     [categories, normalizedSearch],
   );
@@ -51,7 +51,7 @@ function CategoriesSettingsPage() {
           c.type === 'EXPENSE' &&
           (!normalizedSearch ||
             c.name.toLowerCase().includes(normalizedSearch) ||
-            (c.icon ?? '').toLowerCase().includes(normalizedSearch)),
+            (c.description ?? '').toLowerCase().includes(normalizedSearch)),
       ),
     [categories, normalizedSearch],
   );
@@ -98,7 +98,7 @@ function CategoriesSettingsPage() {
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Buscar por nome ou ícone..."
+            placeholder="Buscar por nome ou descrição..."
             className="w-full bg-muted/40 border border-border rounded-xl pl-9 pr-3 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-smooth"
           />
         </div>
@@ -159,8 +159,12 @@ function CategoriesSettingsPage() {
                         style={{ backgroundColor: cat.color ?? 'var(--muted-foreground)' }}
                       />
                       <span className="truncate">
-                        {cat.icon && <span className="mr-1">{cat.icon}</span>}
                         {cat.name}
+                        {cat.description ? (
+                          <span className="text-[10px] text-muted-foreground truncate ml-2">
+                            {cat.description}
+                          </span>
+                        ) : null}
                       </span>
                     </span>
 
@@ -250,8 +254,12 @@ function CategoriesSettingsPage() {
                         style={{ backgroundColor: cat.color ?? 'var(--muted-foreground)' }}
                       />
                       <span className="truncate">
-                        {cat.icon && <span className="mr-1">{cat.icon}</span>}
                         {cat.name}
+                        {cat.description ? (
+                          <span className="text-[10px] text-muted-foreground truncate ml-2">
+                            {cat.description}
+                          </span>
+                        ) : null}
                       </span>
                     </span>
 
