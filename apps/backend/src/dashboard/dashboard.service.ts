@@ -57,46 +57,7 @@ export class DashboardService {
       },
     });
 
-    // 4. Budgets
-    const budgets = await this.db.budget.findMany({
-      where: {
-        userId,
-        month: now.getMonth() + 1,
-        year: now.getFullYear(),
-      },
-      include: {
-        category: true,
-      },
-    });
-
-    // Get actual spending for each budget category
-    const budgetsWithSpent = await Promise.all(
-      budgets.map(async (budget) => {
-        const spent = await this.db.transaction.aggregate({
-          where: {
-            userId,
-            isActive: true,
-            categoryId: budget.categoryId,
-            type: TransactionType.EXPENSE,
-            date: {
-              gte: monthStart,
-              lte: monthEnd,
-            },
-          },
-          _sum: {
-            amount: true,
-          },
-        });
-
-        return {
-          label: budget.category.name,
-          spent: Number(spent._sum.amount || 0),
-          limit: Number(budget.amountLimit),
-        };
-      }),
-    );
-
-    // 5. Cash Flow (last 7 days)
+    // 4. Cash Flow (last 7 days)
     const last7Days = Array.from({ length: 7 }, (_, i) => {
       const date = new Date();
       date.setDate(date.getDate() - (6 - i));
@@ -150,9 +111,8 @@ export class DashboardService {
             ? -Number(t.amount)
             : Number(t.amount),
         date: format(t.date, 'dd MMM'),
-        icon: t.category?.icon || '📦',
+        icon: t.category?.description || '📦',
       })),
-      budgets: budgetsWithSpent,
       cashFlow,
     };
   }

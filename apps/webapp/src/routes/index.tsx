@@ -7,7 +7,6 @@ import {
   ArrowUpCircle,
   ArrowDownCircle,
   CreditCard,
-  PieChart,
   History as HistoryIcon,
   TrendingUp,
   ShieldCheck,
@@ -39,11 +38,6 @@ interface DashboardData {
     val: number;
     date: string;
     icon: string;
-  }>;
-  budgets: Array<{
-    label: string;
-    spent: number;
-    limit: number;
   }>;
   cashFlow: Array<{
     day: string;
@@ -114,7 +108,7 @@ function UserDashboard() {
         </div>
         <button className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary text-primary-foreground font-semibold shadow-lg shadow-primary/20 hover:scale-[1.02] transition-smooth">
           <Plus className="w-4 h-4" />
-          Novo Lançamento
+          Nova Transação
         </button>
       </div>
 
@@ -225,42 +219,6 @@ function UserDashboard() {
 
         {/* Right: Budgets + Accounts */}
         <div className="flex flex-col gap-6">
-          {/* Budgets */}
-          <div className="card-premium p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-sm font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                <PieChart className="w-4 h-4" />
-                Orçamentos
-              </h2>
-            </div>
-            <div className="flex flex-col gap-5">
-              {data.budgets.map((b) => (
-                <div key={b.label}>
-                  <div className="flex justify-between text-[11px] font-bold uppercase tracking-wider mb-1.5">
-                    <span>{b.label}</span>
-                    <span className="text-muted-foreground font-mono">
-                      {((b.spent / b.limit) * 100).toFixed(0)}%
-                    </span>
-                  </div>
-                  <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-primary transition-smooth"
-                      style={{ width: `${Math.min((b.spent / b.limit) * 100, 100)}%` }}
-                    />
-                  </div>
-                </div>
-              ))}
-              {data.budgets.length === 0 && (
-                <p className="text-center py-4 text-xs text-muted-foreground italic">
-                  Crie orçamentos para acompanhar seus gastos.
-                </p>
-              )}
-            </div>
-            <button className="w-full mt-6 py-2.5 rounded-lg border border-border text-[11px] font-bold uppercase tracking-widest hover:bg-muted transition-smooth">
-              Gerenciar
-            </button>
-          </div>
-
           {/* Accounts */}
           <div className="card-premium p-6">
             <div className="flex items-center justify-between mb-6">

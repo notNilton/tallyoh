@@ -1,21 +1,25 @@
 import {
-  Controller,
-  Get,
-  Post,
   Body,
-  Param,
+  Controller,
   Delete,
-  Query,
-  UseGuards,
+  Get,
+  Param,
   Patch,
+  Post,
+  Query,
+  UploadedFile,
+  UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { TransactionsService } from './transactions.service';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { UpdateTransactionDto } from './dto/update-transaction.dto';
 import { ListTransactionsQuery } from './dto/list-transactions.query';
+import { ImportTransactionsDto } from './dto/import-transactions.dto';
 import { Transaction, User } from '@project-budget/database';
 import { JwtAuthGuard } from '../auth/auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @UseGuards(JwtAuthGuard)
 @Controller('transactions')
@@ -28,6 +32,14 @@ export class TransactionsController {
     @Query() query: ListTransactionsQuery,
   ): Promise<Transaction[]> {
     return this.transactionsService.findAll(user.id, query);
+  }
+
+  @Get('future')
+  findFuture(
+    @CurrentUser() user: User,
+    @Query() query: ListTransactionsQuery,
+  ): Promise<any[]> {
+    return this.transactionsService.listFuture(user.id, query);
   }
 
   @Get(':id')
@@ -44,6 +56,22 @@ export class TransactionsController {
     @Body() dto: CreateTransactionDto,
   ): Promise<Transaction> {
     return this.transactionsService.create(user.id, dto);
+  }
+
+  @Post('import-csv')
+  @UseInterceptors(FileInterceptor('file'))
+  importCsv(
+    @CurrentUser() user: User,
+    @UploadedFile() file: any,
+    @Body() dto: ImportTransactionsDto,
+  ): Promise<{
+    created: number;
+    skipped: number;
+    skippedInvalid: number;
+    skippedDuplicate: number;
+    errors: string[];
+  }> {
+    return this.transactionsService.importCsv(user.id, file, dto);
   }
 
   @Patch(':id')

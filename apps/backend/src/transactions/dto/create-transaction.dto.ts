@@ -7,13 +7,17 @@ import {
   IsOptional,
   IsString,
   IsUUID,
+  Max,
   MaxLength,
+  Min,
 } from 'class-validator';
 import {
   TransactionType,
   TransactionClassification,
   PaymentMethod,
+  TransactionChannel,
   FuelType,
+  MaintenanceType,
 } from '@project-budget/database';
 
 export class CreateTransactionDto {
@@ -37,12 +41,32 @@ export class CreateTransactionDto {
   @IsOptional()
   paymentMethod?: PaymentMethod;
 
+  @IsEnum(TransactionChannel)
+  @IsOptional()
+  channel?: TransactionChannel;
+
+  @IsUUID()
+  @IsOptional()
+  cardId?: string;
+
   @IsBoolean()
   @IsOptional()
   isRecurring?: boolean;
 
   @IsNumber()
   amount: number;
+
+  @IsNumber()
+  @IsOptional()
+  @Min(1)
+  @Max(21)
+  totalInstallments?: number;
+
+  @IsNumber()
+  @IsOptional()
+  @Min(0)
+  @Max(21)
+  paidInstallments?: number;
 
   @IsDateString()
   date: Date;
@@ -86,4 +110,13 @@ export class CreateTransactionDto {
   @IsNumber()
   @IsOptional()
   pricePerLiter?: number;
+
+  // Maintenance specific fields
+  @IsEnum(MaintenanceType)
+  @IsOptional()
+  maintenanceType?: MaintenanceType;
+
+  @IsString()
+  @IsOptional()
+  provider?: string;
 }

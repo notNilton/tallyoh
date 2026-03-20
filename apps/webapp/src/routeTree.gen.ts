@@ -8,417 +8,302 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-import { Route as rootRouteImport } from './routes/__root'
-import { Route as TransactionsRouteImport } from './routes/transactions'
-import { Route as SettingsRouteImport } from './routes/settings'
-import { Route as RegisterRouteImport } from './routes/register'
-import { Route as MoreRouteImport } from './routes/more'
-import { Route as LoginRouteImport } from './routes/login'
-import { Route as ImportRouteImport } from './routes/import'
-import { Route as EvolutionRouteImport } from './routes/evolution'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as SettingsIndexRouteImport } from './routes/settings/index'
-import { Route as EvolutionIndexRouteImport } from './routes/evolution/index'
-import { Route as SettingsVehiclesRouteImport } from './routes/settings/vehicles'
-import { Route as SettingsPersonalInfoRouteImport } from './routes/settings/personal-info'
-import { Route as SettingsDataPrivacyRouteImport } from './routes/settings/data-privacy'
-import { Route as SettingsAccountsRouteImport } from './routes/settings/accounts'
-import { Route as EvolutionGoalsRouteImport } from './routes/evolution/goals'
-import { Route as EvolutionFuelRouteImport } from './routes/evolution/fuel'
-import { Route as EvolutionBudgetsRouteImport } from './routes/evolution/budgets'
+import { Route as rootRouteImport } from './routes/__root';
+import { Route as TransactionsRouteImport } from './routes/transactions';
+import { Route as SettingsRouteImport } from './routes/settings';
+import { Route as RegisterRouteImport } from './routes/register';
+import { Route as LoginRouteImport } from './routes/login';
+import { Route as FuelRouteImport } from './routes/fuel';
+import { Route as AccountsRouteImport } from './routes/accounts';
+import { Route as IndexRouteImport } from './routes/index';
+import { Route as SettingsIndexRouteImport } from './routes/settings/index';
+import { Route as SettingsVehiclesRouteImport } from './routes/settings/vehicles';
+import { Route as SettingsPersonalInfoRouteImport } from './routes/settings/personal-info';
+import { Route as SettingsDataPrivacyRouteImport } from './routes/settings/data-privacy';
+import { Route as SettingsCategoriesRouteImport } from './routes/settings/categories';
 
 const TransactionsRoute = TransactionsRouteImport.update({
   id: '/transactions',
   path: '/transactions',
   getParentRoute: () => rootRouteImport,
-} as any)
+} as any);
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
   getParentRoute: () => rootRouteImport,
-} as any)
+} as any);
 const RegisterRoute = RegisterRouteImport.update({
   id: '/register',
   path: '/register',
   getParentRoute: () => rootRouteImport,
-} as any)
-const MoreRoute = MoreRouteImport.update({
-  id: '/more',
-  path: '/more',
-  getParentRoute: () => rootRouteImport,
-} as any)
+} as any);
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
   getParentRoute: () => rootRouteImport,
-} as any)
-const ImportRoute = ImportRouteImport.update({
-  id: '/import',
-  path: '/import',
+} as any);
+const FuelRoute = FuelRouteImport.update({
+  id: '/fuel',
+  path: '/fuel',
   getParentRoute: () => rootRouteImport,
-} as any)
-const EvolutionRoute = EvolutionRouteImport.update({
-  id: '/evolution',
-  path: '/evolution',
+} as any);
+const AccountsRoute = AccountsRouteImport.update({
+  id: '/accounts',
+  path: '/accounts',
   getParentRoute: () => rootRouteImport,
-} as any)
+} as any);
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
-} as any)
+} as any);
 const SettingsIndexRoute = SettingsIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => SettingsRoute,
-} as any)
-const EvolutionIndexRoute = EvolutionIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => EvolutionRoute,
-} as any)
+} as any);
 const SettingsVehiclesRoute = SettingsVehiclesRouteImport.update({
   id: '/vehicles',
   path: '/vehicles',
   getParentRoute: () => SettingsRoute,
-} as any)
+} as any);
 const SettingsPersonalInfoRoute = SettingsPersonalInfoRouteImport.update({
   id: '/personal-info',
   path: '/personal-info',
   getParentRoute: () => SettingsRoute,
-} as any)
+} as any);
 const SettingsDataPrivacyRoute = SettingsDataPrivacyRouteImport.update({
   id: '/data-privacy',
   path: '/data-privacy',
   getParentRoute: () => SettingsRoute,
-} as any)
-const SettingsAccountsRoute = SettingsAccountsRouteImport.update({
-  id: '/accounts',
-  path: '/accounts',
+} as any);
+const SettingsCategoriesRoute = SettingsCategoriesRouteImport.update({
+  id: '/categories',
+  path: '/categories',
   getParentRoute: () => SettingsRoute,
-} as any)
-const EvolutionGoalsRoute = EvolutionGoalsRouteImport.update({
-  id: '/goals',
-  path: '/goals',
-  getParentRoute: () => EvolutionRoute,
-} as any)
-const EvolutionFuelRoute = EvolutionFuelRouteImport.update({
-  id: '/fuel',
-  path: '/fuel',
-  getParentRoute: () => EvolutionRoute,
-} as any)
-const EvolutionBudgetsRoute = EvolutionBudgetsRouteImport.update({
-  id: '/budgets',
-  path: '/budgets',
-  getParentRoute: () => EvolutionRoute,
-} as any)
+} as any);
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
-  '/evolution': typeof EvolutionRouteWithChildren
-  '/import': typeof ImportRoute
-  '/login': typeof LoginRoute
-  '/more': typeof MoreRoute
-  '/register': typeof RegisterRoute
-  '/settings': typeof SettingsRouteWithChildren
-  '/transactions': typeof TransactionsRoute
-  '/evolution/budgets': typeof EvolutionBudgetsRoute
-  '/evolution/fuel': typeof EvolutionFuelRoute
-  '/evolution/goals': typeof EvolutionGoalsRoute
-  '/settings/accounts': typeof SettingsAccountsRoute
-  '/settings/data-privacy': typeof SettingsDataPrivacyRoute
-  '/settings/personal-info': typeof SettingsPersonalInfoRoute
-  '/settings/vehicles': typeof SettingsVehiclesRoute
-  '/evolution/': typeof EvolutionIndexRoute
-  '/settings/': typeof SettingsIndexRoute
+  '/': typeof IndexRoute;
+  '/accounts': typeof AccountsRoute;
+  '/fuel': typeof FuelRoute;
+  '/login': typeof LoginRoute;
+  '/register': typeof RegisterRoute;
+  '/settings': typeof SettingsRouteWithChildren;
+  '/transactions': typeof TransactionsRoute;
+  '/settings/categories': typeof SettingsCategoriesRoute;
+  '/settings/data-privacy': typeof SettingsDataPrivacyRoute;
+  '/settings/personal-info': typeof SettingsPersonalInfoRoute;
+  '/settings/vehicles': typeof SettingsVehiclesRoute;
+  '/settings/': typeof SettingsIndexRoute;
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
-  '/import': typeof ImportRoute
-  '/login': typeof LoginRoute
-  '/more': typeof MoreRoute
-  '/register': typeof RegisterRoute
-  '/transactions': typeof TransactionsRoute
-  '/evolution/budgets': typeof EvolutionBudgetsRoute
-  '/evolution/fuel': typeof EvolutionFuelRoute
-  '/evolution/goals': typeof EvolutionGoalsRoute
-  '/settings/accounts': typeof SettingsAccountsRoute
-  '/settings/data-privacy': typeof SettingsDataPrivacyRoute
-  '/settings/personal-info': typeof SettingsPersonalInfoRoute
-  '/settings/vehicles': typeof SettingsVehiclesRoute
-  '/evolution': typeof EvolutionIndexRoute
-  '/settings': typeof SettingsIndexRoute
+  '/': typeof IndexRoute;
+  '/accounts': typeof AccountsRoute;
+  '/fuel': typeof FuelRoute;
+  '/login': typeof LoginRoute;
+  '/register': typeof RegisterRoute;
+  '/transactions': typeof TransactionsRoute;
+  '/settings/categories': typeof SettingsCategoriesRoute;
+  '/settings/data-privacy': typeof SettingsDataPrivacyRoute;
+  '/settings/personal-info': typeof SettingsPersonalInfoRoute;
+  '/settings/vehicles': typeof SettingsVehiclesRoute;
+  '/settings': typeof SettingsIndexRoute;
 }
 export interface FileRoutesById {
-  __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
-  '/evolution': typeof EvolutionRouteWithChildren
-  '/import': typeof ImportRoute
-  '/login': typeof LoginRoute
-  '/more': typeof MoreRoute
-  '/register': typeof RegisterRoute
-  '/settings': typeof SettingsRouteWithChildren
-  '/transactions': typeof TransactionsRoute
-  '/evolution/budgets': typeof EvolutionBudgetsRoute
-  '/evolution/fuel': typeof EvolutionFuelRoute
-  '/evolution/goals': typeof EvolutionGoalsRoute
-  '/settings/accounts': typeof SettingsAccountsRoute
-  '/settings/data-privacy': typeof SettingsDataPrivacyRoute
-  '/settings/personal-info': typeof SettingsPersonalInfoRoute
-  '/settings/vehicles': typeof SettingsVehiclesRoute
-  '/evolution/': typeof EvolutionIndexRoute
-  '/settings/': typeof SettingsIndexRoute
+  __root__: typeof rootRouteImport;
+  '/': typeof IndexRoute;
+  '/accounts': typeof AccountsRoute;
+  '/fuel': typeof FuelRoute;
+  '/login': typeof LoginRoute;
+  '/register': typeof RegisterRoute;
+  '/settings': typeof SettingsRouteWithChildren;
+  '/transactions': typeof TransactionsRoute;
+  '/settings/categories': typeof SettingsCategoriesRoute;
+  '/settings/data-privacy': typeof SettingsDataPrivacyRoute;
+  '/settings/personal-info': typeof SettingsPersonalInfoRoute;
+  '/settings/vehicles': typeof SettingsVehiclesRoute;
+  '/settings/': typeof SettingsIndexRoute;
 }
 export interface FileRouteTypes {
-  fileRoutesByFullPath: FileRoutesByFullPath
+  fileRoutesByFullPath: FileRoutesByFullPath;
   fullPaths:
     | '/'
-    | '/evolution'
-    | '/import'
+    | '/accounts'
+    | '/fuel'
     | '/login'
-    | '/more'
     | '/register'
     | '/settings'
     | '/transactions'
-    | '/evolution/budgets'
-    | '/evolution/fuel'
-    | '/evolution/goals'
-    | '/settings/accounts'
+    | '/settings/categories'
     | '/settings/data-privacy'
     | '/settings/personal-info'
     | '/settings/vehicles'
-    | '/evolution/'
-    | '/settings/'
-  fileRoutesByTo: FileRoutesByTo
+    | '/settings/';
+  fileRoutesByTo: FileRoutesByTo;
   to:
     | '/'
-    | '/import'
+    | '/accounts'
+    | '/fuel'
     | '/login'
-    | '/more'
     | '/register'
     | '/transactions'
-    | '/evolution/budgets'
-    | '/evolution/fuel'
-    | '/evolution/goals'
-    | '/settings/accounts'
+    | '/settings/categories'
     | '/settings/data-privacy'
     | '/settings/personal-info'
     | '/settings/vehicles'
-    | '/evolution'
-    | '/settings'
+    | '/settings';
   id:
     | '__root__'
     | '/'
-    | '/evolution'
-    | '/import'
+    | '/accounts'
+    | '/fuel'
     | '/login'
-    | '/more'
     | '/register'
     | '/settings'
     | '/transactions'
-    | '/evolution/budgets'
-    | '/evolution/fuel'
-    | '/evolution/goals'
-    | '/settings/accounts'
+    | '/settings/categories'
     | '/settings/data-privacy'
     | '/settings/personal-info'
     | '/settings/vehicles'
-    | '/evolution/'
-    | '/settings/'
-  fileRoutesById: FileRoutesById
+    | '/settings/';
+  fileRoutesById: FileRoutesById;
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
-  EvolutionRoute: typeof EvolutionRouteWithChildren
-  ImportRoute: typeof ImportRoute
-  LoginRoute: typeof LoginRoute
-  MoreRoute: typeof MoreRoute
-  RegisterRoute: typeof RegisterRoute
-  SettingsRoute: typeof SettingsRouteWithChildren
-  TransactionsRoute: typeof TransactionsRoute
+  IndexRoute: typeof IndexRoute;
+  AccountsRoute: typeof AccountsRoute;
+  FuelRoute: typeof FuelRoute;
+  LoginRoute: typeof LoginRoute;
+  RegisterRoute: typeof RegisterRoute;
+  SettingsRoute: typeof SettingsRouteWithChildren;
+  TransactionsRoute: typeof TransactionsRoute;
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
     '/transactions': {
-      id: '/transactions'
-      path: '/transactions'
-      fullPath: '/transactions'
-      preLoaderRoute: typeof TransactionsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
+      id: '/transactions';
+      path: '/transactions';
+      fullPath: '/transactions';
+      preLoaderRoute: typeof TransactionsRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
     '/settings': {
-      id: '/settings'
-      path: '/settings'
-      fullPath: '/settings'
-      preLoaderRoute: typeof SettingsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
+      id: '/settings';
+      path: '/settings';
+      fullPath: '/settings';
+      preLoaderRoute: typeof SettingsRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
     '/register': {
-      id: '/register'
-      path: '/register'
-      fullPath: '/register'
-      preLoaderRoute: typeof RegisterRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/more': {
-      id: '/more'
-      path: '/more'
-      fullPath: '/more'
-      preLoaderRoute: typeof MoreRouteImport
-      parentRoute: typeof rootRouteImport
-    }
+      id: '/register';
+      path: '/register';
+      fullPath: '/register';
+      preLoaderRoute: typeof RegisterRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
     '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/import': {
-      id: '/import'
-      path: '/import'
-      fullPath: '/import'
-      preLoaderRoute: typeof ImportRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/evolution': {
-      id: '/evolution'
-      path: '/evolution'
-      fullPath: '/evolution'
-      preLoaderRoute: typeof EvolutionRouteImport
-      parentRoute: typeof rootRouteImport
-    }
+      id: '/login';
+      path: '/login';
+      fullPath: '/login';
+      preLoaderRoute: typeof LoginRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    '/fuel': {
+      id: '/fuel';
+      path: '/fuel';
+      fullPath: '/fuel';
+      preLoaderRoute: typeof FuelRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    '/accounts': {
+      id: '/accounts';
+      path: '/accounts';
+      fullPath: '/accounts';
+      preLoaderRoute: typeof AccountsRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
     '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
+      id: '/';
+      path: '/';
+      fullPath: '/';
+      preLoaderRoute: typeof IndexRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
     '/settings/': {
-      id: '/settings/'
-      path: '/'
-      fullPath: '/settings/'
-      preLoaderRoute: typeof SettingsIndexRouteImport
-      parentRoute: typeof SettingsRoute
-    }
-    '/evolution/': {
-      id: '/evolution/'
-      path: '/'
-      fullPath: '/evolution/'
-      preLoaderRoute: typeof EvolutionIndexRouteImport
-      parentRoute: typeof EvolutionRoute
-    }
+      id: '/settings/';
+      path: '/';
+      fullPath: '/settings/';
+      preLoaderRoute: typeof SettingsIndexRouteImport;
+      parentRoute: typeof SettingsRoute;
+    };
     '/settings/vehicles': {
-      id: '/settings/vehicles'
-      path: '/vehicles'
-      fullPath: '/settings/vehicles'
-      preLoaderRoute: typeof SettingsVehiclesRouteImport
-      parentRoute: typeof SettingsRoute
-    }
+      id: '/settings/vehicles';
+      path: '/vehicles';
+      fullPath: '/settings/vehicles';
+      preLoaderRoute: typeof SettingsVehiclesRouteImport;
+      parentRoute: typeof SettingsRoute;
+    };
     '/settings/personal-info': {
-      id: '/settings/personal-info'
-      path: '/personal-info'
-      fullPath: '/settings/personal-info'
-      preLoaderRoute: typeof SettingsPersonalInfoRouteImport
-      parentRoute: typeof SettingsRoute
-    }
+      id: '/settings/personal-info';
+      path: '/personal-info';
+      fullPath: '/settings/personal-info';
+      preLoaderRoute: typeof SettingsPersonalInfoRouteImport;
+      parentRoute: typeof SettingsRoute;
+    };
     '/settings/data-privacy': {
-      id: '/settings/data-privacy'
-      path: '/data-privacy'
-      fullPath: '/settings/data-privacy'
-      preLoaderRoute: typeof SettingsDataPrivacyRouteImport
-      parentRoute: typeof SettingsRoute
-    }
-    '/settings/accounts': {
-      id: '/settings/accounts'
-      path: '/accounts'
-      fullPath: '/settings/accounts'
-      preLoaderRoute: typeof SettingsAccountsRouteImport
-      parentRoute: typeof SettingsRoute
-    }
-    '/evolution/goals': {
-      id: '/evolution/goals'
-      path: '/goals'
-      fullPath: '/evolution/goals'
-      preLoaderRoute: typeof EvolutionGoalsRouteImport
-      parentRoute: typeof EvolutionRoute
-    }
-    '/evolution/fuel': {
-      id: '/evolution/fuel'
-      path: '/fuel'
-      fullPath: '/evolution/fuel'
-      preLoaderRoute: typeof EvolutionFuelRouteImport
-      parentRoute: typeof EvolutionRoute
-    }
-    '/evolution/budgets': {
-      id: '/evolution/budgets'
-      path: '/budgets'
-      fullPath: '/evolution/budgets'
-      preLoaderRoute: typeof EvolutionBudgetsRouteImport
-      parentRoute: typeof EvolutionRoute
-    }
+      id: '/settings/data-privacy';
+      path: '/data-privacy';
+      fullPath: '/settings/data-privacy';
+      preLoaderRoute: typeof SettingsDataPrivacyRouteImport;
+      parentRoute: typeof SettingsRoute;
+    };
+    '/settings/categories': {
+      id: '/settings/categories';
+      path: '/categories';
+      fullPath: '/settings/categories';
+      preLoaderRoute: typeof SettingsCategoriesRouteImport;
+      parentRoute: typeof SettingsRoute;
+    };
   }
 }
 
-interface EvolutionRouteChildren {
-  EvolutionBudgetsRoute: typeof EvolutionBudgetsRoute
-  EvolutionFuelRoute: typeof EvolutionFuelRoute
-  EvolutionGoalsRoute: typeof EvolutionGoalsRoute
-  EvolutionIndexRoute: typeof EvolutionIndexRoute
-}
-
-const EvolutionRouteChildren: EvolutionRouteChildren = {
-  EvolutionBudgetsRoute: EvolutionBudgetsRoute,
-  EvolutionFuelRoute: EvolutionFuelRoute,
-  EvolutionGoalsRoute: EvolutionGoalsRoute,
-  EvolutionIndexRoute: EvolutionIndexRoute,
-}
-
-const EvolutionRouteWithChildren = EvolutionRoute._addFileChildren(
-  EvolutionRouteChildren,
-)
-
 interface SettingsRouteChildren {
-  SettingsAccountsRoute: typeof SettingsAccountsRoute
-  SettingsDataPrivacyRoute: typeof SettingsDataPrivacyRoute
-  SettingsPersonalInfoRoute: typeof SettingsPersonalInfoRoute
-  SettingsVehiclesRoute: typeof SettingsVehiclesRoute
-  SettingsIndexRoute: typeof SettingsIndexRoute
+  SettingsCategoriesRoute: typeof SettingsCategoriesRoute;
+  SettingsDataPrivacyRoute: typeof SettingsDataPrivacyRoute;
+  SettingsPersonalInfoRoute: typeof SettingsPersonalInfoRoute;
+  SettingsVehiclesRoute: typeof SettingsVehiclesRoute;
+  SettingsIndexRoute: typeof SettingsIndexRoute;
 }
 
 const SettingsRouteChildren: SettingsRouteChildren = {
-  SettingsAccountsRoute: SettingsAccountsRoute,
+  SettingsCategoriesRoute: SettingsCategoriesRoute,
   SettingsDataPrivacyRoute: SettingsDataPrivacyRoute,
   SettingsPersonalInfoRoute: SettingsPersonalInfoRoute,
   SettingsVehiclesRoute: SettingsVehiclesRoute,
   SettingsIndexRoute: SettingsIndexRoute,
-}
+};
 
-const SettingsRouteWithChildren = SettingsRoute._addFileChildren(
-  SettingsRouteChildren,
-)
+const SettingsRouteWithChildren = SettingsRoute._addFileChildren(SettingsRouteChildren);
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  EvolutionRoute: EvolutionRouteWithChildren,
-  ImportRoute: ImportRoute,
+  AccountsRoute: AccountsRoute,
+  FuelRoute: FuelRoute,
   LoginRoute: LoginRoute,
-  MoreRoute: MoreRoute,
   RegisterRoute: RegisterRoute,
   SettingsRoute: SettingsRouteWithChildren,
   TransactionsRoute: TransactionsRoute,
-}
+};
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
-  ._addFileTypes<FileRouteTypes>()
+  ._addFileTypes<FileRouteTypes>();
 
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
+import type { getRouter } from './router.tsx';
+import type { createStart } from '@tanstack/react-start';
 declare module '@tanstack/react-start' {
   interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
+    ssr: true;
+    router: Awaited<ReturnType<typeof getRouter>>;
   }
 }

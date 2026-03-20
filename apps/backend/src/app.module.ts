@@ -7,12 +7,12 @@ import { UsersModule } from './users/users.module';
 import { AccountsModule } from './accounts/accounts.module';
 import { TransactionsModule } from './transactions/transactions.module';
 import { CategoriesModule } from './categories/categories.module';
-import { BudgetsModule } from './budgets/budgets.module';
-import { GoalsModule } from './goals/goals.module';
 import { AuthModule } from './auth/auth.module';
 import { VehiclesModule } from './vehicles/vehicles.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { SettingsModule } from './settings/settings.module';
+import { TagsModule } from './tags/tags.module';
+import { CardsModule } from './cards/cards.module';
 
 @Module({
   imports: [
@@ -22,12 +22,12 @@ import { SettingsModule } from './settings/settings.module';
     AccountsModule,
     TransactionsModule,
     CategoriesModule,
-    BudgetsModule,
-    GoalsModule,
     AuthModule,
     VehiclesModule,
     DashboardModule,
     SettingsModule,
+    TagsModule,
+    CardsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

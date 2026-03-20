@@ -31,10 +31,11 @@ model User {
     sharedAccounts AccountAccess[]
     categories     Category[]
     transactions   Transaction[]
-    budgets        Budget[]
-    goals          Goal[]
     accounts       Account[]
     vehicles       Vehicle[]
+    cards          Card[]
+    importFiles    ImportFile[]
+    importFingerprints ImportFingerprint[]
 
     @@map("users")
 }
@@ -85,7 +86,49 @@ model Account {
     transactions   Transaction[]
     balanceHistory BalanceHistory[]
 
+    cards Card[]
+    importFiles ImportFile[]
+
     @@map("accounts")
+}
+
+enum CardType {
+    CREDIT
+    DEBIT
+}
+
+model Card {
+    id        String   @id @default(uuid())
+    userId    String   @map("user_id")
+    user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    accountId String   @map("account_id")
+    account   Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+    name      String   @db.VarChar(100)
+    brand     String?  @db.VarChar(50)
+    last4     String?  @db.VarChar(4)
+
+    type      CardType
+    creditLimit Decimal? @map("credit_limit") @db.Decimal(12, 2)
+
+    // Opcional: permite que cada cartão tenha seu próprio fechamento/vencimento.
+    closingDay Int? @map("closing_day")
+    dueDay     Int? @map("due_day")
+
+    color     String?  @db.VarChar(7)
+    icon      String?
+
+    isActive  Boolean   @default(true) @map("is_active")
+    deletedAt DateTime? @map("deleted_at")
+
+    createdAt DateTime @default(now()) @map("created_at")
+    updatedAt DateTime @updatedAt @map("updated_at")
+
+    transactions Transaction[]
+    importFiles ImportFile[]
+
+    @@map("cards")
 }
 
 model AccountAccess {
@@ -127,11 +170,14 @@ enum TransactionType {
     INCOME
     EXPENSE
     TRANSFER
+    ADJUSTMENT
 }
 
 enum TransactionClassification {
     COMMON
     FUEL
+    MAINTENANCE
+    TRANSFER
 }
 
 enum PaymentMethod {
@@ -145,13 +191,20 @@ enum TransactionStatus {
     CANCELED
 }
 
+enum TransactionChannel {
+    CARD_CREDIT
+    CARD_DEBIT
+    PIX
+    BANK
+}
+
 model Category {
     id     String @id @default(uuid())
     userId String @map("user_id")
     user   User?  @relation(fields: [userId], references: [id], onDelete: Cascade)
 
     name  String          @db.VarChar(50)
-    icon  String?
+    description String?   @db.VarChar(255)
     color String?         @db.VarChar(7)
     type  TransactionType
 
@@ -160,15 +213,15 @@ model Category {
     children Category[] @relation("SubCategories")
 
     transactions Transaction[]
-    budgets      Budget[]
 
     @@unique([userId, name, type])
     @@map("categories")
 }
 
 model Tag {
-    id   String @id @default(uuid())
-    name String
+    id    String @id @default(uuid())
+    name  String
+    color String? @db.VarChar(7)
 
     transactionTags TransactionTag[]
 
@@ -193,6 +246,9 @@ model Transaction {
     accountId String  @map("account_id")
     account   Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
 
+    cardId String? @map("card_id")
+    card   Card?   @relation(fields: [cardId], references: [id], onDelete: SetNull)
+
     categoryId String?   @map("category_id")
     category   Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
 
@@ -211,9 +267,11 @@ model Transaction {
     classification TransactionClassification @default(COMMON)
     paymentMethod  PaymentMethod             @default(DEBIT) @map("payment_method")
     isRecurring    Boolean                   @default(false) @map("is_recurring")
+    channel        TransactionChannel        @default(BANK) @map("channel")
 
-    goalId String? @map("goal_id")
-    goal   Goal?   @relation(fields: [goalId], references: [id], onDelete: SetNull)
+    // Para cartão de CRÉDITO: não afeta saldo da conta mãe (afeta limite/dívida do cartão).
+    // Para conta normal e cartão de DÉBITO: afeta saldo normalmente.
+    affectsAccount Boolean @default(true) @map("affects_account")
 
     installmentId     String?      @map("installment_id")
     installment       Installment? @relation(fields: [installmentId], references: [id], onDelete: Cascade)
@@ -223,16 +281,21 @@ model Transaction {
     transferOut Transfer? @relation("TransferSource")
     transferIn  Transfer? @relation("TransferDestination")
 
+    // Opcional: guarda o id da transação original (ex.: estorno/ajuste).
+    originalTransactionId String? @map("original_transaction_id")
+
     isActive  Boolean   @default(true) @map("is_active")
     deletedAt DateTime? @map("deleted_at")
 
     createdAt DateTime @default(now()) @map("created_at")
     updatedAt DateTime @updatedAt @map("updated_at")
 
-    refuelingLog RefuelingLog?
+    refuelingLog   RefuelingLog?
+    maintenanceLog VehicleMaintenance?
 
     @@index([date])
     @@index([userId, date])
+    @@index([userId, cardId, date])
     @@map("transactions")
 }
 
@@ -267,46 +330,45 @@ model Installment {
     @@map("installments")
 }
 
-model Budget {
+model ImportFile {
     id     String @id @default(uuid())
     userId String @map("user_id")
     user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-    categoryId String?   @map("category_id")
-    category   Category? @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+    accountId String? @map("account_id")
+    account   Account? @relation(fields: [accountId], references: [id], onDelete: SetNull)
 
-    amountLimit Decimal @map("amount_limit") @db.Decimal(12, 2)
-    month       Int
-    year        Int
+    cardId String? @map("card_id")
+    card   Card?   @relation(fields: [cardId], references: [id], onDelete: SetNull)
 
-    rolloverAmount Decimal @default(0.00) @map("rollover_amount") @db.Decimal(12, 2)
+    sha256       String @db.VarChar(64)
+    filename     String? @map("filename") @db.VarChar(255)
+    sizeBytes    Int?    @map("size_bytes")
+    importedAt   DateTime @default(now()) @map("imported_at")
 
-    createdAt DateTime @default(now()) @map("created_at")
-    updatedAt DateTime @updatedAt @map("updated_at")
+    fingerprints ImportFingerprint[]
 
-    @@unique([userId, categoryId, month, year])
-    @@map("budgets")
+    @@unique([userId, sha256, accountId, cardId])
+    @@index([userId, importedAt])
+    @@map("import_files")
 }
 
-model Goal {
+model ImportFingerprint {
     id     String @id @default(uuid())
     userId String @map("user_id")
     user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-    name          String  @db.VarChar(100)
-    targetAmount  Decimal @map("target_amount") @db.Decimal(12, 2)
-    currentAmount Decimal @default(0.00) @map("current_amount") @db.Decimal(12, 2)
+    importFileId String @map("import_file_id")
+    importFile   ImportFile @relation(fields: [importFileId], references: [id], onDelete: Cascade)
 
-    deadline DateTime?
-    color    String?   @db.VarChar(7)
-    icon     String?
-
-    transactions Transaction[]
+    // hash de uma linha normalizada (transação)
+    sha256 String @db.VarChar(64)
 
     createdAt DateTime @default(now()) @map("created_at")
-    updatedAt DateTime @updatedAt @map("updated_at")
 
-    @@map("goals")
+    @@unique([userId, sha256])
+    @@index([importFileId])
+    @@map("import_fingerprints")
 }
 
 model AuditLog {
@@ -348,7 +410,8 @@ model Vehicle {
     createdAt DateTime @default(now()) @map("created_at")
     updatedAt DateTime @updatedAt @map("updated_at")
 
-    refuelings RefuelingLog[]
+    refuelings   RefuelingLog[]
+    maintenances VehicleMaintenance[]
 
     @@map("vehicles")
 }
@@ -371,6 +434,33 @@ model RefuelingLog {
     createdAt DateTime @default(now()) @map("created_at")
 
     @@map("refueling_logs")
+}
+
+model VehicleMaintenance {
+    id        String  @id @default(uuid())
+    vehicleId String  @map("vehicle_id")
+    vehicle   Vehicle @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+    transactionId String      @unique @map("transaction_id")
+    transaction   Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+
+    type        MaintenanceType
+    description String?         @db.VarChar(255)
+    odometer    Decimal?        @db.Decimal(10, 2)
+    provider    String?         @db.VarChar(100)
+
+    createdAt DateTime @default(now()) @map("created_at")
+
+    @@map("vehicle_maintenances")
+}
+
+enum MaintenanceType {
+    OIL_CHANGE
+    TIRE_CHANGE
+    PREVENTIVE
+    REPAIR
+    PART_REPLACEMENT
+    OTHER
 }
 
 enum FuelType {

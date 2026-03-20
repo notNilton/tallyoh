@@ -25,8 +25,6 @@ async function main() {
   await prisma.refuelingLog.deleteMany();
   await prisma.vehicle.deleteMany();
   await prisma.auditLog.deleteMany();
-  await prisma.goal.deleteMany();
-  await prisma.budget.deleteMany();
   await prisma.transfer.deleteMany();
   await prisma.transaction.deleteMany();
   await prisma.tag.deleteMany();
@@ -38,10 +36,26 @@ async function main() {
   await prisma.user.deleteMany();
 
   const passwordHash = await bcrypt.hash('password123', 10);
+  const niltonPasswordHash = await bcrypt.hash('@2Organela', 10);
 
-  // 1. Criar Usuários (7 usuários)
+  // 1. Criar Usuários
   console.log('👤 Criando usuários...');
   const users = [];
+
+  const nilton = await prisma.user.create({
+    data: {
+      email: 'nilton.naab@gmail.com',
+      passwordHash: niltonPasswordHash,
+      name: 'Nilton Aguiar dos Santos',
+      phone: '65992785635',
+      avatarUrl: faker.image.avatar(),
+      cpf: null,
+      cnpj: faker.string.numeric(14),
+      subscriptionTier: 'PREMIUM',
+    },
+  });
+  users.push(nilton);
+
   for (let i = 0; i < 7; i++) {
     const isCompany = i > 4; // 2 empresas, 5 pessoas físicas
     const user = await prisma.user.create({
@@ -62,15 +76,81 @@ async function main() {
   // 2. Criar Categorias Globais e de Usuário
   console.log('📂 Criando categorias...');
   const categoryTemplates = [
-    { name: 'Alimentação', icon: 'Utensils', color: '#EF4444', type: TransactionType.EXPENSE },
-    { name: 'Transporte', icon: 'Car', color: '#3B82F6', type: TransactionType.EXPENSE },
-    { name: 'Saúde', icon: 'Heart', color: '#10B981', type: TransactionType.EXPENSE },
-    { name: 'Lazer', icon: 'Gamepad', color: '#F59E0B', type: TransactionType.EXPENSE },
-    { name: 'Salário', icon: 'Banknote', color: '#22C55E', type: TransactionType.INCOME },
-    { name: 'Investimentos', icon: 'TrendingUp', color: '#6366F1', type: TransactionType.INCOME },
-    { name: 'Educação', icon: 'GraduationCap', color: '#8B5CF6', type: TransactionType.EXPENSE },
-    { name: 'Combustível', icon: 'Fuel', color: '#F97316', type: TransactionType.EXPENSE },
-    { name: 'Assinaturas', icon: 'Play', color: '#EC4899', type: TransactionType.EXPENSE },
+    // RECEITAS
+    {
+      name: 'Ativa',
+      description: 'Salários, pró-labore, freelas, vendas e serviços',
+      color: '#22C55E',
+      type: TransactionType.INCOME,
+    },
+    {
+      name: 'Passiva',
+      description: 'Rendimentos de investimentos, dividendos e aluguéis recebidos',
+      color: '#6366F1',
+      type: TransactionType.INCOME,
+    },
+    {
+      name: 'Ajustes',
+      description: 'Reembolsos, estornos e transferências entre contas (entrada)',
+      color: '#F59E0B',
+      type: TransactionType.INCOME,
+    },
+    {
+      name: 'Outros',
+      description: 'Presentes ganhos, prêmios ou entradas esporádicas',
+      color: '#10B981',
+      type: TransactionType.INCOME,
+    },
+
+    // DESPESAS
+    {
+      name: 'Habitação',
+      description: 'Aluguel/financiamento, condomínio, luz, água, internet e manutenção da casa',
+      color: '#3B82F6',
+      type: TransactionType.EXPENSE,
+    },
+    {
+      name: 'Essenciais',
+      description: 'Supermercado, farmácia, higiene e feira',
+      color: '#EF4444',
+      type: TransactionType.EXPENSE,
+    },
+    {
+      name: 'Alimentação',
+      description: 'Restaurantes, delivery, bares e lanches rápidos',
+      color: '#F97316',
+      type: TransactionType.EXPENSE,
+    },
+    {
+      name: 'Mobilidade',
+      description: 'Combustível, Uber, transporte público, IPVA e manutenção de veículo',
+      color: '#8B5CF6',
+      type: TransactionType.EXPENSE,
+    },
+    {
+      name: 'Saúde',
+      description: 'Planos de saúde, exames, dentista e terapias',
+      color: '#10B981',
+      type: TransactionType.EXPENSE,
+    },
+    {
+      name: 'Estilo de Vida',
+      description: 'Lazer, assinaturas (Netflix, Spotify) e viagens',
+      color: '#EC4899',
+      type: TransactionType.EXPENSE,
+    },
+    {
+      name: 'Compras',
+      description: 'Roupas, eletrônicos, presentes e itens de uso pessoal (não recorrente)',
+      color: '#0EA5E9',
+      type: TransactionType.EXPENSE,
+    },
+    {
+      name: 'Financeiro',
+      description: 'Impostos, taxas bancárias, juros e seguros',
+      color: '#64748B',
+      type: TransactionType.EXPENSE,
+    },
   ];
 
   for (const user of users) {
@@ -121,7 +201,7 @@ async function main() {
         data: {
           userId: user.id,
           name: faker.vehicle.model(),
-          make: faker.vehicle.manufacturer(),
+          brand: faker.vehicle.manufacturer(),
           model: faker.vehicle.type(),
           year: faker.number.int({ min: 2010, max: 2024 }),
           licensePlate: `${faker.string.alpha(3).toUpperCase()}${faker.string.numeric(4)}`,
@@ -193,40 +273,7 @@ async function main() {
     }
 
     // 7. Metas (Goals)
-    await prisma.goal.create({
-      data: {
-        userId: user.id,
-        name: 'Reserva de Emergência',
-        targetAmount: 10000,
-        currentAmount: 2500,
-        color: '#10B981',
-      },
-    });
-
-    await prisma.goal.create({
-      data: {
-        userId: user.id,
-        name: 'Viagem Japão',
-        targetAmount: 25000,
-        currentAmount: 1200,
-        color: '#EF4444',
-        deadline: faker.date.future(),
-      },
-    });
-
-    // 8. Orçamentos (Budgets)
-    const foodCat = allCategories.find((c) => c.name === 'Alimentação');
-    if (foodCat) {
-      await prisma.budget.create({
-        data: {
-          userId: user.id,
-          categoryId: foodCat.id,
-          amountLimit: 1200,
-          month: new Date().getMonth() + 1,
-          year: new Date().getFullYear(),
-        },
-      });
-    }
+    // (removido) Metas e Orçamentos já não fazem parte do schema minimalista
   }
 
   console.log('✅ Seed finalizado com sucesso!');
