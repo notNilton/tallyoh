@@ -12,7 +12,6 @@ import {
   Search,
   ArrowUpRight,
   ArrowDownLeft,
-  Calendar,
   Tag,
   CreditCard,
   Edit2,
@@ -43,8 +42,8 @@ function TransactionsPage() {
   const [filterType, setFilterType] = useState<'all' | 'INCOME' | 'EXPENSE'>('all');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [tab, setTab] = useState<'current' | 'past' | 'future'>('current');
-  const [futureMonth, setFutureMonth] = useState<string>(''); // YYYY-MM
-  const [pastMonth, setPastMonth] = useState<string>(''); // YYYY-MM
+  const [futureMonth, setFutureMonth] = useState<string>('');
+  const [pastMonth, setPastMonth] = useState<string>('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
   const [editingTransaction, setEditingTransaction] = useState<Tx | null>(null);
@@ -66,7 +65,7 @@ function TransactionsPage() {
   const { data: categories = [] } = useQuery({
     queryKey: ['categories'],
     queryFn: () => api.get<TxCategory[]>('/categories'),
-    staleTime: 1000 * 60 * 5, // 5 min — categorias mudam raramente
+    staleTime: 1000 * 60 * 5,
   });
 
   const { data: accounts = [] } = useQuery({
@@ -89,7 +88,6 @@ function TransactionsPage() {
     queryClient.invalidateQueries({ queryKey: ['dashboard'] });
   };
 
-  // Delete mutation
   const deleteMutation = useMutation({
     mutationFn: (id: string) => api.delete(`/transactions/${id}`),
     onSuccess: () => {
@@ -115,28 +113,24 @@ function TransactionsPage() {
     setEditingTransaction(null);
     setIsModalOpen(true);
   };
-
-  const handleEdit = (transaction: Tx) => {
+  const handleEdit = (t: Tx) => {
     setModalMode('edit');
-    setEditingTransaction(transaction);
+    setEditingTransaction(t);
     setIsModalOpen(true);
   };
-
   const handleDelete = (id: string) => {
     setConfirmDeleteId(id);
     setConfirmDeleteOpen(true);
   };
-
   const handleDeleteRow = (t: Tx) => {
     if (tab === 'future' && (t.isVirtual || t.id.startsWith('recurring:'))) {
       alert(
-        'Esta é uma transação futura gerada por recorrência e não existe no banco para excluir. Para parar essas futuras, edite a transação base e desative a recorrência.',
+        'Esta é uma transação futura gerada por recorrência. Para parar, edite a transação base e desative a recorrência.',
       );
       return;
     }
     handleDelete(t.id);
   };
-
   const handleModalSuccess = () => {
     queryClient.invalidateQueries({ queryKey: ['transactions'] });
     queryClient.invalidateQueries({ queryKey: ['transactions-month-expenses'] });
@@ -144,21 +138,18 @@ function TransactionsPage() {
   };
 
   const totalSpentMonth = sumExpenses(monthExpenses);
-  const monthLabel = new Date().toLocaleString('pt-BR', { month: 'long' });
-
   const { current: currentTransactions } = splitByToday(transactions);
+
   const pastMonthOptions = Array.from(
     new Set(transactions.filter((t) => new Date(t.date) < monthStart).map((t) => monthKey(t.date))),
   )
     .sort()
     .reverse();
 
-  if (tab === 'past' && pastMonthOptions.length > 0 && !pastMonth) {
+  if (tab === 'past' && pastMonthOptions.length > 0 && !pastMonth)
     setPastMonth(pastMonthOptions[0]);
-  }
-  if (tab === 'past' && pastMonth && !pastMonthOptions.includes(pastMonth)) {
+  if (tab === 'past' && pastMonth && !pastMonthOptions.includes(pastMonth))
     setPastMonth(pastMonthOptions[0] ?? '');
-  }
 
   const pastTransactions =
     tab === 'past' && pastMonth
@@ -167,6 +158,7 @@ function TransactionsPage() {
           const d = new Date(t.date);
           return d >= prevMonthStart && d < monthStart;
         });
+
   const { data: futureTransactions = [] } = useFutureTransactions({
     enabled: tab === 'future',
     search,
@@ -178,14 +170,10 @@ function TransactionsPage() {
     new Set(futureTransactions.map((t) => monthKey(t.date))),
   ).sort();
 
-  // Ajusta mês selecionado quando muda a lista (ex.: filtros/search)
-  if (tab === 'future' && futureMonthOptions.length > 0 && !futureMonth) {
-    // primeiro mês disponível
+  if (tab === 'future' && futureMonthOptions.length > 0 && !futureMonth)
     setFutureMonth(futureMonthOptions[0]);
-  }
-  if (tab === 'future' && futureMonth && !futureMonthOptions.includes(futureMonth)) {
+  if (tab === 'future' && futureMonth && !futureMonthOptions.includes(futureMonth))
     setFutureMonth(futureMonthOptions[0] ?? '');
-  }
 
   const futureTransactionsFiltered =
     tab === 'future' && futureMonth
@@ -198,16 +186,15 @@ function TransactionsPage() {
       : tab === 'past'
         ? pastTransactions
         : currentTransactions;
+
   const totalFutureSpent = sumExpenses(futureTransactionsFiltered);
   const totalPastSpent = sumExpenses(pastTransactions);
 
   const isDeletableRow = (t: Tx) =>
     !(tab === 'future' && (t.isVirtual || t.id.startsWith('recurring:')));
-
   const truncate = (s: string, max: number) => {
     const str = (s ?? '').trim();
-    if (str.length <= max) return str;
-    return str.slice(0, Math.max(0, max - 1)).trimEnd() + '…';
+    return str.length <= max ? str : str.slice(0, max - 1).trimEnd() + '…';
   };
 
   const selectedList = Object.keys(selectedIds);
@@ -220,12 +207,17 @@ function TransactionsPage() {
     allDeletableIds.length > 0 && allDeletableIds.every((id) => selectedIds[id]);
   const isSomeSelected = allDeletableIds.some((id) => selectedIds[id]);
 
+  const summaryValue =
+    tab === 'future' ? -totalFutureSpent : tab === 'past' ? -totalPastSpent : -totalSpentMonth;
+  const summaryLabel =
+    tab === 'future' ? 'Previsto' : tab === 'past' ? 'Gasto no período' : 'Gasto no mês';
+
   return (
-    <div className="p-6 max-w-7xl mx-auto flex flex-col gap-6">
+    <div className="p-6 max-w-6xl mx-auto flex flex-col gap-6">
       <ConfirmDialog
         isOpen={confirmDeleteOpen}
         title="Excluir transação"
-        description="Esta ação não pode ser desfeita. Se a transação for parcelada, as parcelas futuras relacionadas também podem ser removidas."
+        description="Esta ação não pode ser desfeita. Se for parcelada, as parcelas futuras também podem ser removidas."
         confirmText="Excluir"
         cancelText="Cancelar"
         variant="danger"
@@ -247,7 +239,7 @@ function TransactionsPage() {
         title={`Excluir ${selectedDeletable.length} transação(ões)`}
         description={
           selectedNonDeletable.length > 0
-            ? `As transações futuras geradas por recorrência não podem ser excluídas (${selectedNonDeletable.length} selecionada(s) serão ignoradas).`
+            ? `Transações futuras por recorrência serão ignoradas (${selectedNonDeletable.length}).`
             : 'Esta ação não pode ser desfeita.'
         }
         confirmText="Excluir selecionadas"
@@ -275,189 +267,130 @@ function TransactionsPage() {
         accounts={accounts}
         onImported={handleImported}
       />
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-display font-bold">Transações</h1>
-          <p className="text-muted-foreground mt-1">Histórico completo e importação de extratos.</p>
+          <h1 className="text-2xl font-display font-bold">Transações</h1>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Histórico completo e importação de extratos.
+          </p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex gap-2">
           <button
             onClick={() => setIsImportOpen(true)}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-full border border-border font-semibold hover:bg-muted transition-smooth"
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-border text-sm font-semibold hover:bg-muted transition-smooth"
           >
-            <FileUp className="w-4 h-4" />
-            Importar CSV
+            <FileUp className="w-3.5 h-3.5" />
+            Importar
           </button>
           <button
             onClick={handleCreate}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary text-primary-foreground font-semibold shadow-lg shadow-primary/20 hover:scale-[1.02] transition-smooth"
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-semibold shadow-md shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-smooth"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-3.5 h-3.5" />
             Nova Transação
           </button>
         </div>
       </div>
 
-      {/* Resumo (mês atual ou futuro) */}
-      <div className="card-premium p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5">
-        <div className="flex-1 min-w-0">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div className="flex items-center justify-between gap-3">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                {tab === 'future'
-                  ? 'Total gasto futuro'
-                  : tab === 'past'
-                    ? 'Total gasto no mês passado'
-                    : 'Total gasto no mês'}
-              </p>
-
-              {tab === 'future' && (
-                <div className="flex items-center justify-end">
-                  <div className="inline-flex items-center gap-2 bg-muted/40 border border-border rounded-full px-3 py-1.5">
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                      mês
-                    </span>
-                    <div className="w-[1px] h-4 bg-border" />
-                    <select
-                      value={futureMonth}
-                      onChange={(e) => setFutureMonth(e.target.value)}
-                      className="bg-transparent outline-none cursor-pointer text-xs font-bold min-w-[150px] text-right"
-                    >
-                      {futureMonthOptions.length === 0 ? (
-                        <option value="">Sem transações</option>
-                      ) : (
-                        futureMonthOptions.map((key) => (
-                          <option key={key} value={key}>
-                            {formatMonthLabelPtBr(key)}
-                          </option>
-                        ))
-                      )}
-                    </select>
-                  </div>
-                </div>
-              )}
-
-              {tab === 'past' && (
-                <div className="flex items-center justify-end">
-                  <div className="inline-flex items-center gap-2 bg-muted/40 border border-border rounded-full px-3 py-1.5">
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                      mês
-                    </span>
-                    <div className="w-[1px] h-4 bg-border" />
-                    <select
-                      value={pastMonth}
-                      onChange={(e) => setPastMonth(e.target.value)}
-                      className="bg-transparent outline-none cursor-pointer text-xs font-bold min-w-[150px] text-right"
-                    >
-                      {pastMonthOptions.length === 0 ? (
-                        <option value="">Sem transações</option>
-                      ) : (
-                        pastMonthOptions.map((key) => (
-                          <option key={key} value={key}>
-                            {formatMonthLabelPtBr(key)}
-                          </option>
-                        ))
-                      )}
-                    </select>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="mt-1 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-            <p className="text-xs text-muted-foreground">
-              {tab === 'future'
-                ? futureMonth
-                  ? `Total previsto para ${formatMonthLabelPtBr(futureMonth)}`
-                  : 'Somente despesas com data após hoje'
-                : tab === 'past'
-                  ? pastMonth
-                    ? `Total de ${formatMonthLabelPtBr(pastMonth)}`
-                    : `De ${prevMonthStart.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })} até ${new Date(monthStart.getTime() - 1).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}`
-                  : `De ${monthStart.getDate()} ${monthLabel} até hoje`}
+      {/* Resumo + Tabs numa linha */}
+      <div className="flex flex-wrap items-center justify-between gap-4 px-4 py-3 bg-muted/30 rounded-xl border border-border">
+        <div className="flex items-center gap-6">
+          <div>
+            <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">
+              {summaryLabel}
             </p>
+            <PrivacyAmount
+              value={summaryValue}
+              className={`text-2xl font-bold font-display tracking-tight block ${tab === 'future' ? 'text-rose-500' : ''}`}
+            />
           </div>
         </div>
 
-        <PrivacyAmount
-          value={
-            tab === 'future'
-              ? -totalFutureSpent
-              : tab === 'past'
-                ? -totalPastSpent
-                : -totalSpentMonth
-          }
-          className={`text-2xl font-bold font-display ${tab === 'future' ? 'text-rose-500' : ''}`}
-        />
-      </div>
+        <div className="flex items-center gap-3">
+          {/* Seletor de mês (future/past) */}
+          {tab === 'future' && futureMonthOptions.length > 0 && (
+            <select
+              value={futureMonth}
+              onChange={(e) => setFutureMonth(e.target.value)}
+              className="bg-background border border-border rounded-lg px-3 py-1.5 text-xs font-bold outline-none cursor-pointer"
+            >
+              {futureMonthOptions.map((key) => (
+                <option key={key} value={key}>
+                  {formatMonthLabelPtBr(key)}
+                </option>
+              ))}
+            </select>
+          )}
+          {tab === 'past' && pastMonthOptions.length > 0 && (
+            <select
+              value={pastMonth}
+              onChange={(e) => setPastMonth(e.target.value)}
+              className="bg-background border border-border rounded-lg px-3 py-1.5 text-xs font-bold outline-none cursor-pointer"
+            >
+              {pastMonthOptions.map((key) => (
+                <option key={key} value={key}>
+                  {formatMonthLabelPtBr(key)}
+                </option>
+              ))}
+            </select>
+          )}
 
-      {/* Tabs */}
-      <div className="flex gap-2 p-1 bg-muted rounded-2xl w-fit border border-border">
-        <button
-          type="button"
-          onClick={() => setTab('current')}
-          className={`px-4 py-2 text-xs font-bold rounded-xl uppercase tracking-wider transition-smooth ${
-            tab === 'current'
-              ? 'bg-primary text-primary-foreground'
-              : 'text-muted-foreground hover:bg-muted/80'
-          }`}
-        >
-          Transações atuais
-        </button>
-        <button
-          type="button"
-          onClick={() => setTab('past')}
-          className={`px-4 py-2 text-xs font-bold rounded-xl uppercase tracking-wider transition-smooth ${
-            tab === 'past'
-              ? 'bg-primary text-primary-foreground'
-              : 'text-muted-foreground hover:bg-muted/80'
-          }`}
-        >
-          Transações passadas
-        </button>
-        <button
-          type="button"
-          onClick={() => setTab('future')}
-          className={`px-4 py-2 text-xs font-bold rounded-xl uppercase tracking-wider transition-smooth ${
-            tab === 'future'
-              ? 'bg-primary text-primary-foreground'
-              : 'text-muted-foreground hover:bg-muted/80'
-          }`}
-        >
-          Transações futuras
-        </button>
+          {/* Tabs */}
+          <div className="flex gap-1 p-1 bg-muted rounded-lg">
+            {(
+              [
+                { key: 'current', label: 'Atual' },
+                { key: 'past', label: 'Passado' },
+                { key: 'future', label: 'Futuro' },
+              ] as const
+            ).map((t) => (
+              <button
+                key={t.key}
+                type="button"
+                onClick={() => setTab(t.key)}
+                className={`px-3 py-1.5 text-xs font-bold rounded-md uppercase tracking-wider transition-smooth ${
+                  tab === t.key
+                    ? 'bg-background text-foreground shadow-sm'
+                    : 'text-muted-foreground hover:bg-muted-foreground/5'
+                }`}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap gap-4 items-center justify-between">
-        <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2 items-center justify-between">
+        <div className="flex gap-2 flex-wrap">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
             <input
               type="text"
-              placeholder="Buscar por descrição..."
+              placeholder="Buscar descrição..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-10 pr-4 py-2 bg-card border border-border rounded-xl text-sm focus:ring-2 focus:ring-primary/20 outline-none w-[240px]"
+              className="pl-9 pr-3 py-2 bg-card border border-border rounded-lg text-xs focus:ring-2 focus:ring-primary/20 outline-none w-[200px]"
             />
           </div>
           <select
             value={filterType}
             onChange={(e) => setFilterType(e.target.value as 'all' | 'INCOME' | 'EXPENSE')}
-            className="px-3 py-2 bg-card border border-border rounded-xl text-sm font-medium hover:bg-muted transition-smooth outline-none cursor-pointer"
+            className="px-3 py-2 bg-card border border-border rounded-lg text-xs font-medium hover:bg-muted transition-smooth outline-none cursor-pointer"
           >
-            <option value="all">Todos os Tipos</option>
+            <option value="all">Todos os tipos</option>
             <option value="INCOME">Entradas</option>
             <option value="EXPENSE">Saídas</option>
           </select>
           <select
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
-            className="px-3 py-2 bg-card border border-border rounded-xl text-sm font-medium hover:bg-muted transition-smooth outline-none cursor-pointer"
+            className="px-3 py-2 bg-card border border-border rounded-lg text-xs font-medium hover:bg-muted transition-smooth outline-none cursor-pointer"
           >
-            <option value="all">Todas as Categorias</option>
+            <option value="all">Todas as categorias</option>
             {categories.map((cat) => (
               <option key={cat.id} value={cat.id}>
                 {cat.description ?? cat.name}
@@ -467,7 +400,7 @@ function TransactionsPage() {
         </div>
 
         <div className="flex items-center gap-2">
-          {selectedList.length > 0 ? (
+          {selectedList.length > 0 && (
             <button
               type="button"
               onClick={() => setSelectedIds({})}
@@ -475,19 +408,14 @@ function TransactionsPage() {
             >
               Limpar seleção
             </button>
-          ) : null}
+          )}
           <button
             type="button"
             onClick={() => setConfirmBulkDeleteOpen(true)}
             disabled={selectedDeletable.length === 0 || bulkDeleteMutation.isPending}
-            className="flex items-center gap-2 px-4 py-2 rounded-full border border-border font-semibold hover:bg-muted transition-smooth disabled:opacity-50"
-            title={
-              selectedDeletable.length === 0
-                ? 'Selecione transações para excluir'
-                : 'Excluir transações selecionadas'
-            }
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border text-xs font-semibold hover:bg-muted transition-smooth disabled:opacity-50"
           >
-            <Trash2 className="w-4 h-4" />
+            <Trash2 className="w-3.5 h-3.5" />
             Excluir ({selectedDeletable.length})
           </button>
         </div>
@@ -498,7 +426,7 @@ function TransactionsPage() {
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-muted/50 border-b border-border">
-              <th className="px-4 py-3 w-[44px]">
+              <th className="px-3 py-2.5 w-[36px]">
                 <input
                   type="checkbox"
                   checked={isAllSelected}
@@ -506,8 +434,7 @@ function TransactionsPage() {
                     if (el) el.indeterminate = !isAllSelected && isSomeSelected;
                   }}
                   onChange={(e) => {
-                    const checked = e.target.checked;
-                    if (!checked) {
+                    if (!e.target.checked) {
                       setSelectedIds({});
                       return;
                     }
@@ -515,49 +442,41 @@ function TransactionsPage() {
                     for (const id of allDeletableIds) next[id] = true;
                     setSelectedIds(next);
                   }}
-                  className="h-4 w-4 accent-primary cursor-pointer"
-                  title="Selecionar todas"
+                  className="h-3.5 w-3.5 accent-primary cursor-pointer"
                 />
               </th>
-              <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-                Data
-              </th>
-              <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-                Descrição
-              </th>
-              <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-                Categoria
-              </th>
-              <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-                Conta
-              </th>
-              <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-muted-foreground text-right">
-                Valor
-              </th>
+              {['Data', 'Descrição', 'Categoria', 'Conta', 'Valor'].map((h, i) => (
+                <th
+                  key={h}
+                  className={`px-3 py-2.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground ${i === 4 ? 'text-right' : ''}`}
+                >
+                  {h}
+                </th>
+              ))}
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
             {isLoading ? (
               <tr>
-                <td colSpan={6} className="px-6 py-16 text-center">
-                  <div className="flex flex-col items-center gap-3">
-                    <Loader2 className="w-7 h-7 animate-spin text-primary" />
-                    <p className="text-sm text-muted-foreground">Carregando transações...</p>
+                <td colSpan={6} className="px-4 py-14 text-center">
+                  <div className="flex flex-col items-center gap-2">
+                    <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                    <p className="text-xs text-muted-foreground">Carregando...</p>
                   </div>
                 </td>
               </tr>
             ) : tableTransactions.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-6 py-16 text-center">
-                  <p className="text-sm text-muted-foreground">
+                <td colSpan={6} className="px-4 py-14 text-center">
+                  <p className="text-xs text-muted-foreground">
                     {tab === 'future'
-                      ? 'Nenhuma transação futura encontrada.'
+                      ? 'Nenhuma transação futura.'
                       : 'Nenhuma transação encontrada.'}
                   </p>
                   {tab === 'current' && (
                     <button
                       onClick={handleCreate}
-                      className="mt-3 text-xs font-bold text-primary hover:underline"
+                      className="mt-2 text-xs font-bold text-primary hover:underline"
                     >
                       + Adicionar a primeira transação
                     </button>
@@ -573,159 +492,107 @@ function TransactionsPage() {
                     key={t.id}
                     className="hover:bg-muted/20 transition-smooth group cursor-pointer"
                   >
-                    <td className="px-4 py-3">
+                    <td className="px-3 py-2.5">
                       <input
                         type="checkbox"
                         checked={!!selectedIds[t.id]}
                         disabled={!isDeletableRow(t)}
                         onClick={(e) => e.stopPropagation()}
                         onChange={(e) => {
-                          const checked = e.target.checked;
                           setSelectedIds((prev) => {
                             const next = { ...prev };
-                            if (checked) next[t.id] = true;
+                            if (e.target.checked) next[t.id] = true;
                             else delete next[t.id];
                             return next;
                           });
                         }}
-                        className="h-4 w-4 accent-primary cursor-pointer disabled:opacity-40"
-                        title={
-                          isDeletableRow(t)
-                            ? 'Selecionar'
-                            : 'Transação virtual (recorrência) não pode ser excluída'
-                        }
+                        className="h-3.5 w-3.5 accent-primary cursor-pointer disabled:opacity-40"
                       />
                     </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2 text-sm">
-                        <Calendar className="w-3.5 h-3.5 text-muted-foreground" />
-                        {new Date(t.date).toLocaleDateString('pt-BR', {
-                          day: '2-digit',
-                          month: 'short',
-                          year: 'numeric',
-                          timeZone: 'UTC',
-                        })}
-                      </div>
+                    <td className="px-3 py-2.5 text-xs text-muted-foreground whitespace-nowrap">
+                      {new Date(t.date).toLocaleDateString('pt-BR', {
+                        day: '2-digit',
+                        month: 'short',
+                        timeZone: 'UTC',
+                      })}
                     </td>
-                    <td className="px-4 py-3 font-medium text-sm" title={t.description}>
-                      {truncate(t.description ?? '', 50)}
+                    <td className="px-3 py-2.5 text-sm font-medium" title={t.description}>
+                      {truncate(t.description ?? '', 45)}
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-3 py-2.5">
                       {t.category ? (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/5 text-primary text-[10px] font-bold uppercase tracking-wider border border-primary/10">
-                          <Tag className="w-3 h-3" />
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/5 text-primary text-[10px] font-bold uppercase tracking-wider border border-primary/10">
+                          <Tag className="w-2.5 h-2.5" />
                           {t.category.name}
                         </span>
                       ) : (
-                        <span className="text-xs text-muted-foreground italic">—</span>
+                        <span className="text-xs text-muted-foreground">—</span>
                       )}
                     </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground font-medium">
-                        <CreditCard className="w-3.5 h-3.5" />
-                        <span className="truncate">{t.account?.name ?? '—'}</span>
+                    <td className="px-3 py-2.5">
+                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <CreditCard className="w-3 h-3 shrink-0" />
+                        <span className="truncate max-w-[100px]">{t.account?.name ?? '—'}</span>
                       </div>
-                      {t.card ? (
-                        <div className="mt-1 flex items-center gap-2">
+                      <div className="mt-0.5 flex flex-wrap gap-1">
+                        {t.card ? (
                           <span
-                            className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border"
+                            className="inline-flex px-1.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider border"
                             style={{
                               backgroundColor: `${t.card.color ?? '#64748B'}15`,
                               borderColor: `${t.card.color ?? '#64748B'}35`,
                               color: t.card.color ?? '#64748B',
                             }}
-                            title={
-                              t.card.type === 'CREDIT' ? 'Cartão de crédito' : 'Cartão de débito'
-                            }
                           >
                             {t.card.type === 'CREDIT' ? 'crédito' : 'débito'}
                           </span>
-                          <span className="text-xs font-semibold text-foreground truncate">
-                            {t.card.name}
-                          </span>
-                        </div>
-                      ) : (
-                        <div className="mt-1 flex flex-wrap items-center gap-2">
-                          {t.channel === 'PIX' ? (
+                        ) : (
+                          <>
                             <span
-                              className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border"
-                              style={{
-                                backgroundColor: '#8B5CF615',
-                                borderColor: '#8B5CF635',
-                                color: '#8B5CF6',
-                              }}
-                              title="Transação via PIX"
-                            >
-                              pix
-                            </span>
-                          ) : t.channel === 'CARD_DEBIT' ? (
-                            <span
-                              className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border"
+                              className="inline-flex px-1.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider border"
                               style={{
                                 backgroundColor: '#64748B15',
                                 borderColor: '#64748B35',
                                 color: '#64748B',
                               }}
-                              title="Transação via cartão de débito"
                             >
-                              débito
+                              {t.channel === 'PIX'
+                                ? 'pix'
+                                : t.channel === 'CARD_DEBIT'
+                                  ? 'débito'
+                                  : t.channel === 'CARD_CREDIT'
+                                    ? 'crédito'
+                                    : 'bancária'}
                             </span>
-                          ) : t.channel === 'CARD_CREDIT' ? (
-                            <span
-                              className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border"
-                              style={{
-                                backgroundColor: '#64748B15',
-                                borderColor: '#64748B35',
-                                color: '#64748B',
-                              }}
-                              title="Transação via cartão de crédito"
-                            >
-                              crédito
-                            </span>
-                          ) : (
-                            <span
-                              className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border"
-                              style={{
-                                backgroundColor: '#64748B15',
-                                borderColor: '#64748B35',
-                                color: '#64748B',
-                              }}
-                              title="Transação bancária"
-                            >
-                              bancária
-                            </span>
-                          )}
-
-                          {t.classification === 'TRANSFER' ? (
-                            <span
-                              className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border"
-                              style={{
-                                backgroundColor: '#F59E0B15',
-                                borderColor: '#F59E0B35',
-                                color: '#F59E0B',
-                              }}
-                              title="Quitação/transferência (ex.: pagamento de fatura)"
-                            >
-                              fatura
-                            </span>
-                          ) : null}
-                        </div>
-                      )}
+                            {t.classification === 'TRANSFER' && (
+                              <span
+                                className="inline-flex px-1.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider border"
+                                style={{
+                                  backgroundColor: '#F59E0B15',
+                                  borderColor: '#F59E0B35',
+                                  color: '#F59E0B',
+                                }}
+                              >
+                                fatura
+                              </span>
+                            )}
+                          </>
+                        )}
+                      </div>
                     </td>
                     <td
-                      className={`px-4 py-3 text-right font-bold text-sm ${isIncome ? 'text-emerald-500' : 'text-foreground'}`}
+                      className={`px-3 py-2.5 text-right font-bold text-sm ${isIncome ? 'text-emerald-500' : 'text-foreground'}`}
                     >
-                      <div className="flex items-center justify-end gap-2">
-                        <div className="opacity-0 group-hover:opacity-100 flex items-center gap-1 transition-smooth">
+                      <div className="flex items-center justify-end gap-1.5">
+                        <div className="opacity-0 group-hover:opacity-100 flex items-center gap-0.5 transition-smooth">
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
                               handleEdit(t);
                             }}
-                            className="p-1.5 rounded-lg hover:bg-primary/10 text-muted-foreground hover:text-primary transition-smooth"
-                            title="Editar"
+                            className="p-1 rounded-md hover:bg-primary/10 text-muted-foreground hover:text-primary transition-smooth"
                           >
-                            <Edit2 className="w-4 h-4" />
+                            <Edit2 className="w-3.5 h-3.5" />
                           </button>
                           <button
                             onClick={(e) => {
@@ -733,17 +600,16 @@ function TransactionsPage() {
                               handleDeleteRow(t);
                             }}
                             disabled={deleteMutation.isPending}
-                            className="p-1.5 rounded-lg hover:bg-rose-500/10 text-muted-foreground hover:text-rose-500 transition-smooth disabled:opacity-40"
-                            title="Excluir"
+                            className="p-1 rounded-md hover:bg-rose-500/10 text-muted-foreground hover:text-rose-500 transition-smooth disabled:opacity-40"
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </div>
                         <div className="flex items-center">
                           {isIncome ? (
-                            <ArrowUpRight className="inline w-3 h-3 mr-1" />
+                            <ArrowUpRight className="inline w-3 h-3 mr-0.5" />
                           ) : (
-                            <ArrowDownLeft className="inline w-3 h-3 mr-1" />
+                            <ArrowDownLeft className="inline w-3 h-3 mr-0.5" />
                           )}
                           <PrivacyAmount value={isIncome ? value : -value} />
                         </div>
