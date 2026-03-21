@@ -175,7 +175,7 @@ export function AccountModal({
     setHasDebit(initialAccount?.hasDebit ?? true);
     setHasPix(initialAccount?.hasPix ?? true);
     const existingLimit = Number(initialAccount?.creditLimit ?? 0);
-    setHasCredit(initialAccount?.hasCredit ?? existingLimit > 0);
+    setHasCredit((initialAccount?.hasCredit ?? false) || existingLimit > 0);
     setCreditLimit(existingLimit > 0 ? Math.floor(existingLimit * 100).toString() : '0');
   }, [isOpen, initialAccount]);
 

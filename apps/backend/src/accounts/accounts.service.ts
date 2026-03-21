@@ -74,9 +74,11 @@ export class AccountsService {
             ? new Prisma.Decimal(dto.balance)
             : undefined,
         creditLimit:
-          dto.creditLimit !== undefined
-            ? new Prisma.Decimal(dto.creditLimit)
-            : undefined,
+          dto.creditLimit === null
+            ? null
+            : dto.creditLimit !== undefined
+              ? new Prisma.Decimal(dto.creditLimit)
+              : undefined,
         hasDebit: dto.hasDebit,
         hasPix: dto.hasPix,
         hasCredit: dto.hasCredit,
