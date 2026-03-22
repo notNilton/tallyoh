@@ -61,12 +61,12 @@ export default function Header() {
             Contas
           </Link>
           <Link
-            to="/fuel"
+            to="/vehicles"
             className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-bold text-muted-foreground hover:text-foreground hover:bg-accent transition-smooth"
             activeProps={{ className: 'text-foreground bg-accent' }}
           >
             <Fuel className="w-4 h-4" />
-            Resumos Veículos
+            Veículos
           </Link>
         </div>
 

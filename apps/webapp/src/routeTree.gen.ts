@@ -9,11 +9,11 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as VehiclesRouteImport } from './routes/vehicles'
 import { Route as TransactionsRouteImport } from './routes/transactions'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as LoginRouteImport } from './routes/login'
-import { Route as FuelRouteImport } from './routes/fuel'
 import { Route as AccountsRouteImport } from './routes/accounts'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SettingsIndexRouteImport } from './routes/settings/index'
@@ -22,6 +22,11 @@ import { Route as SettingsPersonalInfoRouteImport } from './routes/settings/pers
 import { Route as SettingsDataPrivacyRouteImport } from './routes/settings/data-privacy'
 import { Route as SettingsCategoriesRouteImport } from './routes/settings/categories'
 
+const VehiclesRoute = VehiclesRouteImport.update({
+  id: '/vehicles',
+  path: '/vehicles',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TransactionsRoute = TransactionsRouteImport.update({
   id: '/transactions',
   path: '/transactions',
@@ -40,11 +45,6 @@ const RegisterRoute = RegisterRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const FuelRoute = FuelRouteImport.update({
-  id: '/fuel',
-  path: '/fuel',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AccountsRoute = AccountsRouteImport.update({
@@ -86,11 +86,11 @@ const SettingsCategoriesRoute = SettingsCategoriesRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/accounts': typeof AccountsRoute
-  '/fuel': typeof FuelRoute
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/settings': typeof SettingsRouteWithChildren
   '/transactions': typeof TransactionsRoute
+  '/vehicles': typeof VehiclesRoute
   '/settings/categories': typeof SettingsCategoriesRoute
   '/settings/data-privacy': typeof SettingsDataPrivacyRoute
   '/settings/personal-info': typeof SettingsPersonalInfoRoute
@@ -100,10 +100,10 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/accounts': typeof AccountsRoute
-  '/fuel': typeof FuelRoute
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/transactions': typeof TransactionsRoute
+  '/vehicles': typeof VehiclesRoute
   '/settings/categories': typeof SettingsCategoriesRoute
   '/settings/data-privacy': typeof SettingsDataPrivacyRoute
   '/settings/personal-info': typeof SettingsPersonalInfoRoute
@@ -114,11 +114,11 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/accounts': typeof AccountsRoute
-  '/fuel': typeof FuelRoute
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/settings': typeof SettingsRouteWithChildren
   '/transactions': typeof TransactionsRoute
+  '/vehicles': typeof VehiclesRoute
   '/settings/categories': typeof SettingsCategoriesRoute
   '/settings/data-privacy': typeof SettingsDataPrivacyRoute
   '/settings/personal-info': typeof SettingsPersonalInfoRoute
@@ -130,11 +130,11 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/accounts'
-    | '/fuel'
     | '/login'
     | '/register'
     | '/settings'
     | '/transactions'
+    | '/vehicles'
     | '/settings/categories'
     | '/settings/data-privacy'
     | '/settings/personal-info'
@@ -144,10 +144,10 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/accounts'
-    | '/fuel'
     | '/login'
     | '/register'
     | '/transactions'
+    | '/vehicles'
     | '/settings/categories'
     | '/settings/data-privacy'
     | '/settings/personal-info'
@@ -157,11 +157,11 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/accounts'
-    | '/fuel'
     | '/login'
     | '/register'
     | '/settings'
     | '/transactions'
+    | '/vehicles'
     | '/settings/categories'
     | '/settings/data-privacy'
     | '/settings/personal-info'
@@ -172,15 +172,22 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AccountsRoute: typeof AccountsRoute
-  FuelRoute: typeof FuelRoute
   LoginRoute: typeof LoginRoute
   RegisterRoute: typeof RegisterRoute
   SettingsRoute: typeof SettingsRouteWithChildren
   TransactionsRoute: typeof TransactionsRoute
+  VehiclesRoute: typeof VehiclesRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/vehicles': {
+      id: '/vehicles'
+      path: '/vehicles'
+      fullPath: '/vehicles'
+      preLoaderRoute: typeof VehiclesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/transactions': {
       id: '/transactions'
       path: '/transactions'
@@ -207,13 +214,6 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/fuel': {
-      id: '/fuel'
-      path: '/fuel'
-      fullPath: '/fuel'
-      preLoaderRoute: typeof FuelRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/accounts': {
@@ -291,11 +291,11 @@ const SettingsRouteWithChildren = SettingsRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AccountsRoute: AccountsRoute,
-  FuelRoute: FuelRoute,
   LoginRoute: LoginRoute,
   RegisterRoute: RegisterRoute,
   SettingsRoute: SettingsRouteWithChildren,
   TransactionsRoute: TransactionsRoute,
+  VehiclesRoute: VehiclesRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
