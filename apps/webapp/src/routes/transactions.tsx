@@ -611,7 +611,7 @@ function TransactionsPage() {
                           ) : (
                             <ArrowDownLeft className="inline w-3 h-3 mr-0.5" />
                           )}
-                          <PrivacyAmount value={isIncome ? value : -value} />
+                          <PrivacyAmount value={value} />
                         </div>
                       </div>
                     </td>

@@ -215,11 +215,17 @@ function useTransactionModalFormState({
 
   const [isExpense, setIsExpense] = useState(initialData ? initialData.type === 'EXPENSE' : true);
   const [isRecurring, setIsRecurring] = useState(initialData?.isRecurring ?? false);
-  const [date, setDate] = useState(
-    initialData?.date
-      ? new Date(initialData.date).toISOString().split('T')[0]
-      : new Date().toISOString().split('T')[0],
-  );
+  const [date, setDate] = useState(() => {
+    if (initialData?.date) {
+      return new Date(initialData.date).toISOString().split('T')[0];
+    }
+    const today = new Date();
+    return [
+      today.getFullYear(),
+      String(today.getMonth() + 1).padStart(2, '0'),
+      String(today.getDate()).padStart(2, '0'),
+    ].join('-');
+  });
   const [description, setDescription] = useState(initialData?.description ?? '');
   const [amount, setAmount] = useState(
     initialData ? Math.floor(Math.abs(Number(initialData.amount)) * 100).toString() : '0',
