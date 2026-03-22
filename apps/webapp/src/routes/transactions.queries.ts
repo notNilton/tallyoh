@@ -82,6 +82,17 @@ export function sumExpenses(list: Tx[]): number {
     .reduce((acc, t) => acc + Math.abs(Number(t.amount)), 0);
 }
 
+export function sumIncome(list: Tx[]): number {
+  return list
+    .filter((t) => t.type === 'INCOME')
+    .reduce((acc, t) => acc + Math.abs(Number(t.amount)), 0);
+}
+
+export function currentMonthKey(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+}
+
 export function monthKey(dateLike: string | Date): string {
   const d = typeof dateLike === 'string' ? new Date(dateLike) : dateLike;
   const y = d.getFullYear();

@@ -23,12 +23,12 @@ import {
   type TxCategory,
   formatMonthLabelPtBr,
   monthKey,
+  currentMonthKey,
   startOfPreviousMonthLocal,
   startOfMonthLocal,
-  splitByToday,
   sumExpenses,
+  sumIncome,
   useFutureTransactions,
-  useMonthExpenses,
   useTransactionsList,
 } from './transactions.queries';
 
@@ -60,7 +60,6 @@ function TransactionsPage() {
     filterType,
     selectedCategory,
   });
-  const { data: monthExpenses = [] } = useMonthExpenses();
 
   const { data: categories = [] } = useQuery({
     queryKey: ['categories'],
@@ -83,7 +82,6 @@ function TransactionsPage() {
 
   const handleImported = () => {
     queryClient.invalidateQueries({ queryKey: ['transactions'] });
-    queryClient.invalidateQueries({ queryKey: ['transactions-month-expenses'] });
     queryClient.invalidateQueries({ queryKey: ['transactions-future'] });
     queryClient.invalidateQueries({ queryKey: ['dashboard'] });
   };
@@ -102,7 +100,6 @@ function TransactionsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
-      queryClient.invalidateQueries({ queryKey: ['transactions-month-expenses'] });
       queryClient.invalidateQueries({ queryKey: ['transactions-future'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
     },
@@ -133,12 +130,13 @@ function TransactionsPage() {
   };
   const handleModalSuccess = () => {
     queryClient.invalidateQueries({ queryKey: ['transactions'] });
-    queryClient.invalidateQueries({ queryKey: ['transactions-month-expenses'] });
     queryClient.invalidateQueries({ queryKey: ['dashboard'] });
   };
 
-  const totalSpentMonth = sumExpenses(monthExpenses);
-  const { current: currentTransactions } = splitByToday(transactions);
+  const thisMonthKey = currentMonthKey();
+  const currentTransactions = transactions.filter((t) => t.date.slice(0, 7) === thisMonthKey);
+  const totalSpentMonth = sumExpenses(currentTransactions);
+  const totalIncomeMonth = sumIncome(currentTransactions);
 
   const pastMonthOptions = Array.from(
     new Set(transactions.filter((t) => new Date(t.date) < monthStart).map((t) => monthKey(t.date))),
@@ -188,7 +186,9 @@ function TransactionsPage() {
         : currentTransactions;
 
   const totalFutureSpent = sumExpenses(futureTransactionsFiltered);
+  const totalFutureIncome = sumIncome(futureTransactionsFiltered);
   const totalPastSpent = sumExpenses(pastTransactions);
+  const totalPastIncome = sumIncome(pastTransactions);
 
   const isDeletableRow = (t: Tx) =>
     !(tab === 'future' && (t.isVirtual || t.id.startsWith('recurring:')));
@@ -207,10 +207,10 @@ function TransactionsPage() {
     allDeletableIds.length > 0 && allDeletableIds.every((id) => selectedIds[id]);
   const isSomeSelected = allDeletableIds.some((id) => selectedIds[id]);
 
-  const summaryValue =
-    tab === 'future' ? -totalFutureSpent : tab === 'past' ? -totalPastSpent : -totalSpentMonth;
-  const summaryLabel =
-    tab === 'future' ? 'Previsto' : tab === 'past' ? 'Gasto no período' : 'Gasto no mês';
+  const summaryExpenses =
+    tab === 'future' ? totalFutureSpent : tab === 'past' ? totalPastSpent : totalSpentMonth;
+  const summaryIncome =
+    tab === 'future' ? totalFutureIncome : tab === 'past' ? totalPastIncome : totalIncomeMonth;
 
   return (
     <div className="p-6 max-w-6xl mx-auto flex flex-col gap-6">
@@ -299,11 +299,20 @@ function TransactionsPage() {
         <div className="flex items-center gap-6">
           <div>
             <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">
-              {summaryLabel}
+              Despesas
             </p>
             <PrivacyAmount
-              value={summaryValue}
-              className={`text-2xl font-bold font-display tracking-tight block ${tab === 'future' ? 'text-rose-500' : ''}`}
+              value={-summaryExpenses}
+              className="text-2xl font-bold font-display tracking-tight block text-rose-500"
+            />
+          </div>
+          <div>
+            <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">
+              Receitas
+            </p>
+            <PrivacyAmount
+              value={summaryIncome}
+              className="text-2xl font-bold font-display tracking-tight block text-emerald-500"
             />
           </div>
         </div>
