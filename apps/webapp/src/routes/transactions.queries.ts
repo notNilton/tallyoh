@@ -98,10 +98,15 @@ export function formatMonthLabelPtBr(key: string): string {
 
 export function splitByToday(list: Tx[]): { current: Tx[]; future: Tx[]; today: Date } {
   const today = startOfDayLocal();
+  const todayStr = [
+    today.getFullYear(),
+    String(today.getMonth() + 1).padStart(2, '0'),
+    String(today.getDate()).padStart(2, '0'),
+  ].join('-');
   return {
     today,
-    current: list.filter((t) => new Date(t.date) <= today),
-    future: list.filter((t) => new Date(t.date) > today),
+    current: list.filter((t) => t.date.slice(0, 10) <= todayStr),
+    future: list.filter((t) => t.date.slice(0, 10) > todayStr),
   };
 }
 
