@@ -17,18 +17,16 @@ import {
   Edit2,
   Trash2,
   Loader2,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import {
   type Tx,
   type TxCategory,
   formatMonthLabelPtBr,
-  monthKey,
   currentMonthKey,
-  startOfPreviousMonthLocal,
-  startOfMonthLocal,
   sumExpenses,
   sumIncome,
-  useFutureTransactions,
   useTransactionsList,
 } from './transactions.queries';
 
@@ -41,9 +39,7 @@ function TransactionsPage() {
   const [search, setSearch] = useState('');
   const [filterType, setFilterType] = useState<'all' | 'INCOME' | 'EXPENSE'>('all');
   const [selectedCategory, setSelectedCategory] = useState('all');
-  const [tab, setTab] = useState<'current' | 'past' | 'future'>('current');
-  const [futureMonth, setFutureMonth] = useState<string>('');
-  const [pastMonth, setPastMonth] = useState<string>('');
+  const [selectedMonth, setSelectedMonth] = useState<string>(() => currentMonthKey());
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
   const [editingTransaction, setEditingTransaction] = useState<Tx | null>(null);
@@ -53,8 +49,6 @@ function TransactionsPage() {
   const [selectedIds, setSelectedIds] = useState<Record<string, true>>({});
   const [confirmBulkDeleteOpen, setConfirmBulkDeleteOpen] = useState(false);
 
-  const monthStart = startOfMonthLocal();
-  const prevMonthStart = startOfPreviousMonthLocal();
   const { data: transactions = [], isLoading } = useTransactionsList({
     search,
     filterType,
@@ -82,7 +76,6 @@ function TransactionsPage() {
 
   const handleImported = () => {
     queryClient.invalidateQueries({ queryKey: ['transactions'] });
-    queryClient.invalidateQueries({ queryKey: ['transactions-future'] });
     queryClient.invalidateQueries({ queryKey: ['dashboard'] });
   };
 
@@ -100,7 +93,6 @@ function TransactionsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
-      queryClient.invalidateQueries({ queryKey: ['transactions-future'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
     },
   });
@@ -119,98 +111,43 @@ function TransactionsPage() {
     setConfirmDeleteId(id);
     setConfirmDeleteOpen(true);
   };
-  const handleDeleteRow = (t: Tx) => {
-    if (tab === 'future' && (t.isVirtual || t.id.startsWith('recurring:'))) {
-      alert(
-        'Esta é uma transação futura gerada por recorrência. Para parar, edite a transação base e desative a recorrência.',
-      );
-      return;
-    }
-    handleDelete(t.id);
-  };
   const handleModalSuccess = () => {
     queryClient.invalidateQueries({ queryKey: ['transactions'] });
     queryClient.invalidateQueries({ queryKey: ['dashboard'] });
   };
 
-  const thisMonthKey = currentMonthKey();
-  const currentTransactions = transactions.filter((t) => t.date.slice(0, 7) === thisMonthKey);
-  const totalSpentMonth = sumExpenses(currentTransactions);
-  const totalIncomeMonth = sumIncome(currentTransactions);
-
-  const pastMonthOptions = Array.from(
-    new Set(transactions.filter((t) => new Date(t.date) < monthStart).map((t) => monthKey(t.date))),
+  // Meses disponíveis: derivados das transações existentes, mais o mês atual sempre presente
+  const availableMonths = Array.from(
+    new Set([currentMonthKey(), ...transactions.map((t) => t.date.slice(0, 7))]),
   )
     .sort()
     .reverse();
 
-  if (tab === 'past' && pastMonthOptions.length > 0 && !pastMonth)
-    setPastMonth(pastMonthOptions[0]);
-  if (tab === 'past' && pastMonth && !pastMonthOptions.includes(pastMonth))
-    setPastMonth(pastMonthOptions[0] ?? '');
+  // Garante que o mês selecionado é válido
+  const activeMonth = availableMonths.includes(selectedMonth)
+    ? selectedMonth
+    : (availableMonths[0] ?? currentMonthKey());
 
-  const pastTransactions =
-    tab === 'past' && pastMonth
-      ? transactions.filter((t) => monthKey(t.date) === pastMonth)
-      : transactions.filter((t) => {
-          const d = new Date(t.date);
-          return d >= prevMonthStart && d < monthStart;
-        });
+  const activeIndex = availableMonths.indexOf(activeMonth);
+  const canGoPrev = activeIndex < availableMonths.length - 1;
+  const canGoNext = activeIndex > 0;
 
-  const { data: futureTransactions = [] } = useFutureTransactions({
-    enabled: tab === 'future',
-    search,
-    filterType,
-    selectedCategory,
-  });
+  const tableTransactions = transactions.filter((t) => t.date.slice(0, 7) === activeMonth);
 
-  const futureMonthOptions = Array.from(
-    new Set(futureTransactions.map((t) => monthKey(t.date))),
-  ).sort();
+  const summaryExpenses = sumExpenses(tableTransactions);
+  const summaryIncome = sumIncome(tableTransactions);
 
-  if (tab === 'future' && futureMonthOptions.length > 0 && !futureMonth)
-    setFutureMonth(futureMonthOptions[0]);
-  if (tab === 'future' && futureMonth && !futureMonthOptions.includes(futureMonth))
-    setFutureMonth(futureMonthOptions[0] ?? '');
-
-  const futureTransactionsFiltered =
-    tab === 'future' && futureMonth
-      ? futureTransactions.filter((t) => monthKey(t.date) === futureMonth)
-      : futureTransactions;
-
-  const tableTransactions =
-    tab === 'future'
-      ? futureTransactionsFiltered
-      : tab === 'past'
-        ? pastTransactions
-        : currentTransactions;
-
-  const totalFutureSpent = sumExpenses(futureTransactionsFiltered);
-  const totalFutureIncome = sumIncome(futureTransactionsFiltered);
-  const totalPastSpent = sumExpenses(pastTransactions);
-  const totalPastIncome = sumIncome(pastTransactions);
-
-  const isDeletableRow = (t: Tx) =>
-    !(tab === 'future' && (t.isVirtual || t.id.startsWith('recurring:')));
   const truncate = (s: string, max: number) => {
     const str = (s ?? '').trim();
     return str.length <= max ? str : str.slice(0, max - 1).trimEnd() + '…';
   };
 
   const selectedList = Object.keys(selectedIds);
-  const selectedDeletable = tableTransactions.filter((t) => selectedIds[t.id] && isDeletableRow(t));
-  const selectedNonDeletable = tableTransactions.filter(
-    (t) => selectedIds[t.id] && !isDeletableRow(t),
-  );
-  const allDeletableIds = tableTransactions.filter(isDeletableRow).map((t) => t.id);
+  const selectedDeletable = tableTransactions.filter((t) => selectedIds[t.id]);
+  const allDeletableIds = tableTransactions.map((t) => t.id);
   const isAllSelected =
     allDeletableIds.length > 0 && allDeletableIds.every((id) => selectedIds[id]);
   const isSomeSelected = allDeletableIds.some((id) => selectedIds[id]);
-
-  const summaryExpenses =
-    tab === 'future' ? totalFutureSpent : tab === 'past' ? totalPastSpent : totalSpentMonth;
-  const summaryIncome =
-    tab === 'future' ? totalFutureIncome : tab === 'past' ? totalPastIncome : totalIncomeMonth;
 
   return (
     <div className="p-6 max-w-6xl mx-auto flex flex-col gap-6">
@@ -237,11 +174,7 @@ function TransactionsPage() {
       <ConfirmDialog
         isOpen={confirmBulkDeleteOpen}
         title={`Excluir ${selectedDeletable.length} transação(ões)`}
-        description={
-          selectedNonDeletable.length > 0
-            ? `Transações futuras por recorrência serão ignoradas (${selectedNonDeletable.length}).`
-            : 'Esta ação não pode ser desfeita.'
-        }
+        description="Esta ação não pode ser desfeita."
         confirmText="Excluir selecionadas"
         cancelText="Cancelar"
         variant="danger"
@@ -294,7 +227,7 @@ function TransactionsPage() {
         </div>
       </div>
 
-      {/* Resumo + Tabs numa linha */}
+      {/* Resumo + seletor de mês */}
       <div className="flex flex-wrap items-center justify-between gap-4 px-4 py-3 bg-muted/30 rounded-xl border border-border">
         <div className="flex items-center gap-6">
           <div>
@@ -327,58 +260,35 @@ function TransactionsPage() {
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          {/* Seletor de mês (future/past) */}
-          {tab === 'future' && futureMonthOptions.length > 0 && (
-            <select
-              value={futureMonth}
-              onChange={(e) => setFutureMonth(e.target.value)}
-              className="bg-background border border-border rounded-lg px-3 py-1.5 text-xs font-bold outline-none cursor-pointer"
-            >
-              {futureMonthOptions.map((key) => (
-                <option key={key} value={key}>
-                  {formatMonthLabelPtBr(key)}
-                </option>
-              ))}
-            </select>
-          )}
-          {tab === 'past' && pastMonthOptions.length > 0 && (
-            <select
-              value={pastMonth}
-              onChange={(e) => setPastMonth(e.target.value)}
-              className="bg-background border border-border rounded-lg px-3 py-1.5 text-xs font-bold outline-none cursor-pointer"
-            >
-              {pastMonthOptions.map((key) => (
-                <option key={key} value={key}>
-                  {formatMonthLabelPtBr(key)}
-                </option>
-              ))}
-            </select>
-          )}
-
-          {/* Tabs */}
-          <div className="flex gap-1 p-1 bg-muted rounded-lg">
-            {(
-              [
-                { key: 'current', label: 'Atual' },
-                { key: 'past', label: 'Passado' },
-                { key: 'future', label: 'Futuro' },
-              ] as const
-            ).map((t) => (
-              <button
-                key={t.key}
-                type="button"
-                onClick={() => setTab(t.key)}
-                className={`px-3 py-1.5 text-xs font-bold rounded-md uppercase tracking-wider transition-smooth ${
-                  tab === t.key
-                    ? 'bg-background text-foreground shadow-sm'
-                    : 'text-muted-foreground hover:bg-muted-foreground/5'
-                }`}
-              >
-                {t.label}
-              </button>
+        {/* Seletor de mês */}
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            disabled={!canGoPrev}
+            onClick={() => setSelectedMonth(availableMonths[activeIndex + 1] ?? activeMonth)}
+            className="p-1.5 rounded-lg hover:bg-muted transition-smooth disabled:opacity-30"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+          <select
+            value={activeMonth}
+            onChange={(e) => setSelectedMonth(e.target.value)}
+            className="bg-background border border-border rounded-lg px-3 py-1.5 text-xs font-bold outline-none cursor-pointer"
+          >
+            {availableMonths.map((key) => (
+              <option key={key} value={key}>
+                {formatMonthLabelPtBr(key)}
+              </option>
             ))}
-          </div>
+          </select>
+          <button
+            type="button"
+            disabled={!canGoNext}
+            onClick={() => setSelectedMonth(availableMonths[activeIndex - 1] ?? activeMonth)}
+            className="p-1.5 rounded-lg hover:bg-muted transition-smooth disabled:opacity-30"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
         </div>
       </div>
 
@@ -487,19 +397,13 @@ function TransactionsPage() {
             ) : tableTransactions.length === 0 ? (
               <tr>
                 <td colSpan={6} className="px-4 py-14 text-center">
-                  <p className="text-xs text-muted-foreground">
-                    {tab === 'future'
-                      ? 'Nenhuma transação futura.'
-                      : 'Nenhuma transação encontrada.'}
-                  </p>
-                  {tab === 'current' && (
-                    <button
-                      onClick={handleCreate}
-                      className="mt-2 text-xs font-bold text-primary hover:underline"
-                    >
-                      + Adicionar a primeira transação
-                    </button>
-                  )}
+                  <p className="text-xs text-muted-foreground">Nenhuma transação neste mês.</p>
+                  <button
+                    onClick={handleCreate}
+                    className="mt-2 text-xs font-bold text-primary hover:underline"
+                  >
+                    + Adicionar transação
+                  </button>
                 </td>
               </tr>
             ) : (
@@ -515,7 +419,6 @@ function TransactionsPage() {
                       <input
                         type="checkbox"
                         checked={!!selectedIds[t.id]}
-                        disabled={!isDeletableRow(t)}
                         onClick={(e) => e.stopPropagation()}
                         onChange={(e) => {
                           setSelectedIds((prev) => {
@@ -525,7 +428,7 @@ function TransactionsPage() {
                             return next;
                           });
                         }}
-                        className="h-3.5 w-3.5 accent-primary cursor-pointer disabled:opacity-40"
+                        className="h-3.5 w-3.5 accent-primary cursor-pointer"
                       />
                     </td>
                     <td className="px-3 py-2.5 text-xs text-muted-foreground whitespace-nowrap">
@@ -616,7 +519,7 @@ function TransactionsPage() {
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleDeleteRow(t);
+                              handleDelete(t.id);
                             }}
                             disabled={deleteMutation.isPending}
                             className="p-1 rounded-md hover:bg-rose-500/10 text-muted-foreground hover:text-rose-500 transition-smooth disabled:opacity-40"
